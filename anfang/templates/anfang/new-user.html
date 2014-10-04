@@ -1,0 +1,56 @@
+{% extends "anfang/bootstrap-generic.html" %}
+{% block body %}
+<div align=center class="lead" style="padding-top: 10px">
+  Welcome! To get started, enter in the following information:
+</div>
+<form action={% url 'anfang:new-user-create' %} method="post" id="new-user-create">
+  {% csrf_token %}
+  <div class="row">
+    <div align="right" class="col-md-6">
+      <label for="email">Email: </label>
+    </div>
+    <div class="col-md-6">
+      <input id="email" type="text" name="email" value="{{ email_from_cookie }}" placeholder="Enter email address">
+    </div>
+  </div>
+  <div class="row">
+    <div align="right" class="col-md-6">
+      <label for="password">Password: </label>
+    </div>
+    <div class="col-md-6">
+      <input id="password" type="password" name="password" value="" placeholder="Enter password">
+    </div>
+  </div>
+  <div class="row">
+    <div align="right" class="col-md-6">
+      <label for="password">Confirm password: </label>
+    </div>
+    <div class="col-md-6">
+      <input id="password_confirm" type="password" name="password_confirm" value="" placeholder="Confirm password">
+    </div>
+  </div>
+  <div class="row">
+    <div align="right" class="col-md-6">
+      <label for="email">Email address of the person you're in a relationship with: </label>
+    </div>
+    <div class="col-md-6">
+      <input id="email" type="text" name="relwith_email" value="" placeholder="Your S.O.">
+    </div>
+  </div>
+  <div class="row" align="center" style="padding-top: 5px";>
+    <div class="col-md-12">
+      <button type="submit" onclick="validatePasswordsAndUpdateUI(); return false;" class="btn-primary" form="new-user-create">Go!</button>
+    </div>
+  </div>
+  <div id="pwdonotmatch" class="row" align="center" style="padding-top: 5px; visibility:hidden";>
+    <div class="col-md-12">
+      <font color=red>Passwords do not match.</font>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scriptload %}
+{% load staticfiles %}
+<script src={% static "js/new-user-page.js" %}></script>
+{% endblock %}
