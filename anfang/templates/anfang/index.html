@@ -1,0 +1,28 @@
+{% extends "anfang/bootstrap-generic.html" %}
+{% block body %}
+  <form action="{% url 'anfang:loginproc' %}" method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div align="right" class="col-md-6">
+	<label for="email">Email: </label>
+      </div>
+      <div class="col-md-6">
+	<input id="email" type="text" name="email" value="{{ email_from_cookie }}" placeholder="Enter email address">
+      </div>
+    </div>
+    <div class="row">
+      <div align="right" class="col-md-6">
+	<label for="password">Password: </label>
+      </div>
+      <div class="col-md-6">
+	<input id="password" type="password" name="password" value="" placeholder="Enter password">
+      </div>
+    </div>
+    <br>
+    <div class="row" align="center">
+      <div class="col-md-12">
+	<input type="submit" value="OK">
+      </div>
+    </div>
+  </form>
+{% endblock %}
