@@ -59,12 +59,8 @@ WSGI_APPLICATION = 'stii.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'USER':'mybabyboo',
-        'PASSWORD':'61TUVQ3F6872l9R',
-        'HOST':'mybabyboo.cvr5cfbiq3ly.us-east-1.rds.amazonaws.com',
-        'PORT':'5432',
-        'NAME':'babyboo'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
