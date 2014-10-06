@@ -36,7 +36,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'anfang'
+    'anfang',
+    'account',
+    'pinax_theme_bootstrap',
+    'bootstrapform'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -47,6 +50,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "account.middleware.LocaleMiddleware",
+    "account.middleware.TimezoneMiddleware",
 )
 
 ROOT_URLCONF = 'stii.urls'
@@ -83,3 +88,18 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.request",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+    "account.context_processors.account",
+    "pinax_theme_bootstrap.context_processors.theme",
+)

@@ -11,5 +11,5 @@ function validatePasswordsAndUpdateUI() {
   } else {
     $("#pwdonotmatch").css("visibility", "hidden");
   }
-  return false;
+  return areSame;
 }
