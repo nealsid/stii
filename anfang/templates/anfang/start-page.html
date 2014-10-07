@@ -1,3 +1,13 @@
 {% extends "anfang/bootstrap-generic.html" %}
 {% block body %}
+{% if primaryreluser %}
+You are in a relationship with {{ primaryreluser }}.
+{% else %}
+You are NOT in a relationship.<br>
+<ul>
+  {% for one_potential_user in potential_users %}
+  <li> {{ one_potential_user.username }} <a href={% url "anfang:mark_relationship" %}?with_id={{ one_potential_user.id }}>Mark as in a relationship </a> </li>
+  {% endfor %}
+</ul>
+{% endif %}
 {% endblock %}
