@@ -1,7 +1,16 @@
 {% extends "anfang/bootstrap-generic.html" %}
 {% block body %}
 {% if primaryreluser %}
-You are in a relationship with {{ primaryreluser }}.
+You are in a relationship with {{ primaryreluser }}.<br>
+<img src="{{ current_user_profile.profile_picture.url }}">
+<form action={% url "anfang:picture_save" %} id="picture-upload" method="POST" enctype="multipart/form-data">
+   {% csrf_token %}
+  {{ picform }}
+   <button type="submit" class="btn-primary" form="picture-upload">Go!</button>
+ </form>
+
+<!--   <input type="file" capture="camera" accept="image/*" id="cameraInput" name="cameraInput"> -->
+
 {% else %}
 You are NOT in a relationship.<br>
 <ul>
