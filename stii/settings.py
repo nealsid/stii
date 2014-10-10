@@ -82,6 +82,8 @@ USE_L10N = True
 
 USE_TZ = True
 
+MEDIA_ROOT=os.path.join(BASE_DIR, 'profile-pictures')
+MEDIA_URL='/profile-pictures/'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
@@ -103,3 +105,5 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "account.context_processors.account",
     "pinax_theme_bootstrap.context_processors.theme",
 )
+
+TEST_DATA = os.path.join(BASE_DIR, 'testcasedata')
