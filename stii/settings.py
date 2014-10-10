@@ -109,3 +109,5 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "account.context_processors.account",
     "pinax_theme_bootstrap.context_processors.theme",
 )
+
+TEST_DATA = os.path.join(BASE_DIR, 'testcasedata')

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
     profile_picture = models.ImageField(null=True)
-    primary_relationship = models.ForeignKey('UserRelationship')
+    primary_relationship = models.ForeignKey('UserRelationship', null = True)
     relationships = models.ManyToManyField('UserRelationship', related_name="secondary")
     def __unicode__(self):
         return "%(email)s in a relationship with id: %(id)d" % {"email":self.user.email,"id":self.primary_relationship_id}

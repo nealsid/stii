@@ -20,7 +20,9 @@ def picture_save(request):
             # file is saved
             form.save()
             return HttpResponseRedirect('/anfang/start')
-            
+        else:
+            return HttpResponseRedirect('/anfang/start?err=invalid_image')
+
 def handle_uploaded_file(f):
     with open('/tmp/foo.png', 'wb+') as destination:
         for chunk in f.chunks():
@@ -40,6 +42,7 @@ def start(request):
         other_user = None
         potential_users = User.objects.filter(userprofile = None).exclude(id = u.id)
         current_user_profile = None
+        
     context = {
         'primaryreluser':other_user,
         'potential_users':potential_users,
@@ -47,6 +50,8 @@ def start(request):
         'current_user_profile': current_user_profile,
         'status_updates':status_updates,
     }
+    if request.GET.has_key('err') and request.GET['err'] == 'invalid_image':
+        context['err'] = 'The image you uploaded does not appear to be valid'
     return render(request, "anfang/start-page.html", context)
 
 @login_required

@@ -1,5 +1,8 @@
 {% extends "anfang/bootstrap-generic.html" %}
 {% block body %}
+{% if err %}
+<font color=red>{{ err }} </font><br>
+{% endif %}
 {% if primaryreluser %}
 You are in a relationship with {{ primaryreluser }}.<br>
 <img src="{{ current_user_profile.profile_picture.url }}">
