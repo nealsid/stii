@@ -11,7 +11,7 @@ import os
 class PicUploadTests(TestCase):
     testPNG = os.path.join(settings.TEST_DATA, "hoek.png")
     testInvalidPNG = os.path.join(settings.TEST_DATA, "hoek-fuzzed.png")
-                           
+
     def setUp(self):
         u = User.objects.create_user("test1", "nealsid+test1@gmail.com", "test1")
         userprofile = UserProfile()
@@ -25,7 +25,7 @@ class PicUploadTests(TestCase):
         client = Client()
         self.assertTrue(client.login(username="test1",password="test1"))
         with open(self.testInvalidPNG) as fp:
-            resp = client.post(reverse("anfang:picture_save"), {'name':'profile_picture', 'attachment': fp})
+            resp = client.post(reverse("anfang:picture_save"), {'name':'profile_picture', 'profile_picture': fp})
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(resp['Location'].find("err=invalid_image") != -1)
 
@@ -33,7 +33,6 @@ class PicUploadTests(TestCase):
         client = Client()
         self.assertTrue(client.login(username="test1",password="test1"))
         with open(self.testPNG) as fp:
-            resp = client.post(reverse("anfang:picture_save"), {'name':'profile_picture', 'attachment': fp})
-        logging.error(str(resp))
+            resp = client.post(reverse("anfang:picture_save"), {'name':'profile_picture', 'profile_picture': fp})
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(resp['Location'].find("err=invalid_image") == -1)

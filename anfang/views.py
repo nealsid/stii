@@ -8,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 from forms import ProfilePicForm
 from models import UserProfile, UserRelationship, StatusUpdate
 
+import logging
+
 # Create your views here.
 def index(request):
     return render(request, 'anfang/index.html')
@@ -18,9 +20,11 @@ def picture_save(request):
         form = ProfilePicForm(request.POST, request.FILES, instance=request.user.userprofile)
         if form.is_valid():
             # file is saved
+            logging.info("Saving new profile picture for " + str(request.user))
             form.save()
             return HttpResponseRedirect('/anfang/start')
         else:
+            logging.warning("Invalid profile picture for " + str(request.user))
             return HttpResponseRedirect('/anfang/start?err=invalid_image')
 
 def handle_uploaded_file(f):
@@ -42,7 +46,7 @@ def start(request):
         other_user = None
         potential_users = User.objects.filter(userprofile = None).exclude(id = u.id)
         current_user_profile = None
-        
+
     context = {
         'primaryreluser':other_user,
         'potential_users':potential_users,
