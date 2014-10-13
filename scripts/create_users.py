@@ -1,16 +1,18 @@
 #!/usr/bin/python2.7
 
 from django.contrib.auth.models import User
-from anfang.models import UserProfile, UserRelationship
+from anfang.models import UserProfile, UserRelationship, StatusUpdate
 from django.conf import settings
 from django.test import Client
 from django.core.urlresolvers import reverse
 
 import logging
+import datetime
 
 UserRelationship.objects.all().delete()
 UserProfile.objects.all().delete()
 User.objects.filter(username__startswith='user', email__startswith='nealsid+test').delete()
+StatusUpdate.objects.all().delete()
 
 users = []
 
@@ -65,3 +67,16 @@ for i in range(NUM_USERS):
             logging.info("Uploaded pic for user " + users[i].username)
             continue
     logging.error("Error uploading pic for user " + users[i].username)
+
+NUM_STATUS_UPDATES_PER_USER = 3
+with open('status-updates.txt') as fp:
+    statii = fp.readlines()
+
+statii = [x.strip() for x in statii]
+for u in users:
+    for status in statii:
+        s = StatusUpdate(relationship = u.userprofile.primary_relationship,
+                         posting_user = u,
+                         text = status,
+                         time = datetime.datetime.now())
+        s.save()

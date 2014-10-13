@@ -5,14 +5,28 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 
-from forms import ProfilePicForm
+from forms import ProfilePicForm, StatusUpdateForm
 from models import UserProfile, UserRelationship, StatusUpdate
 
+import datetime
 import logging
 
 # Create your views here.
 def index(request):
     return render(request, 'anfang/index.html')
+
+@login_required
+def new_status(request):
+    if request.method == 'POST':
+        form = StatusUpdateForm(request.POST)
+        if form.is_valid():
+            logging.info("Saving status update")
+            status_update = form.save(commit=False)
+            status_update.relationship = request.user.userprofile.primary_relationship
+            status_update.posting_user = request.user
+            status_update.time = datetime.datetime.now()
+            status_update.save()
+    return HttpResponseRedirect("/anfang/start")
 
 @login_required
 def picture_save(request):
@@ -36,23 +50,32 @@ def handle_uploaded_file(f):
 def start(request):
     u = request.user
     picform = ProfilePicForm(instance=u)
+    status_form = StatusUpdateForm()
     if hasattr(u, "userprofile"):
         primary_rel = u.userprofile.primary_relationship
         current_user_profile = u.userprofile
-        other_user = User.objects.filter(userprofile__primary_relationship=primary_rel).exclude(id=u.id)
+        other_user = User.objects.filter(userprofile__primary_relationship=primary_rel).exclude(id=u.id)[0]
+        other_user_profile = other_user.userprofile
         potential_users = None
         status_updates = StatusUpdate.objects.filter(relationship=primary_rel).order_by('-time')
+        user = u
     else:
         other_user = None
         potential_users = User.objects.filter(userprofile = None).exclude(id = u.id)
+        other_user_profile = None
         current_user_profile = None
+        status_updates = None
+        user = u
 
     context = {
         'primaryreluser':other_user,
+        'otheruserprofile':other_user_profile,
         'potential_users':potential_users,
         'picform':picform,
+        'status_form':status_form,
         'current_user_profile': current_user_profile,
         'status_updates':status_updates,
+        'user':u,
     }
     if request.GET.has_key('err') and request.GET['err'] == 'invalid_image':
         context['err'] = 'The image you uploaded does not appear to be valid'

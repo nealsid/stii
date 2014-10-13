@@ -14,8 +14,8 @@ class UserRelationship(models.Model):
     title = models.CharField(max_length = 25)
 
 class StatusUpdate(models.Model):
-    relationship = models.ForeignKey('UserRelationship')
-    text = models.CharField(max_length = 512)
+    relationship = models.ForeignKey(UserRelationship)
+    posting_user = models.ForeignKey(User)
+    text = models.CharField(max_length = 512, verbose_name = "New status")
     picture = models.ImageField(null = True)
     time = models.DateTimeField()
-

@@ -4,22 +4,37 @@
 <font color=red>{{ err }} </font><br>
 {% endif %}
 {% if primaryreluser %}
+Hello, {{ user.username }}!<br>
 You are in a relationship with {{ primaryreluser }}.<br>
-<img src="{{ current_user_profile.profile_picture.url }}">
-<form action={% url "anfang:picture_save" %} id="picture-upload" method="POST" enctype="multipart/form-data">
-   {% csrf_token %}
-  {{ picform }}
-   <button type="submit" class="btn-primary" form="picture-upload">Go!</button>
- </form>
 
+{% if current_user_profile.profile_picture %}
+<img src="{{ otheruserprofile.profile_picture.url }}">
+{% endif %}
 <!--   <input type="file" capture="camera" accept="image/*" id="cameraInput" name="cameraInput"> -->
 
+<form action={% url "anfang:new_status" %} id="new-status"  method="POST">
+  {% csrf_token %}
+  {{ status_form }}
+  <button type="submit" class=btn-primary form="new-status" method="POST">Update</button>
+</form>
+<ul>
+{% for s in status_updates %}
+  <li>{{ s.text }}</li>
+{% endfor %}
+</ul>
+
 {% else %}
-You are NOT in a relationship.<br>
+Hello, {{ user.username }}, you are NOT in a relationship.<br>
 <ul>
   {% for one_potential_user in potential_users %}
   <li> {{ one_potential_user.username }} <a href={% url "anfang:mark_relationship" %}?with_id={{ one_potential_user.id }}>Mark as in a relationship </a> </li>
   {% endfor %}
 </ul>
 {% endif %}
+<form action={% url "anfang:picture_save" %} id="picture-upload" method="POST" enctype="multipart/form-data">
+   {% csrf_token %}
+  {{ picform }}
+   <button type="submit" class="btn-primary" form="picture-upload">Go!</button>
+ </form>
+
 {% endblock %}
