@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, UserManager
 from anfang.models import UserProfile, UserRelationship, StatusUpdate
 from django.conf import settings
 from django.test import Client
@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 
 import logging
 import datetime
+import pytz
 
 UserRelationship.objects.all().delete()
 UserProfile.objects.all().delete()
@@ -19,21 +20,19 @@ users = []
 NUM_USERS = 100
 
 if len(User.objects.filter(username='user1')) == 0:
+    logging.error("Creating users")
     for i in range(NUM_USERS):
-        user = User(first_name='User%dFirstName' % i,
-                    last_name='User%dLastName' % i,
-                    username='user%d' % i,
-                    email='nealsid+test%d@gmail.com' % i,
-                    # password is 'test'
-                    password='pbkdf2_sha256$12000$mpCt9572ToHh$ouv28btSpDSjNoVyYRo/SIpAjMzgMYbYY3YG9HcW15A=',
-                    is_active=True)
+        user = User.objects.create_user('user%d' % i,
+                                        email='nealsid+test%d@gmail.com' % i,
+                                        password='test',
+                                        first_name='User%dFirstName' % i,
+                                        last_name='User%dLastName' % i)
         users.append(user)
 
-    User.objects.bulk_create(users)
 
 # We have to do the following even when we've just created them
 # because bulk_create doesn't set the primary_key field of the above
-# objects when they're created in the database.
+# objects (the ones in memory) when they're created in the database.
 users = User.objects.filter(username__startswith='user', email__startswith='nealsid+test')
 
 relationships = []
@@ -78,5 +77,5 @@ for u in users:
         s = StatusUpdate(relationship = u.userprofile.primary_relationship,
                          posting_user = u,
                          text = status,
-                         time = datetime.datetime.now())
+                         time = datetime.datetime.now(tz=pytz.utc))
         s.save()

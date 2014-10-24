@@ -1,12 +1,14 @@
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.template import RequestContext, loader
 
 from forms import ProfilePicForm, StatusUpdateForm
 from models import UserProfile, UserRelationship, StatusUpdate
+from hashers import AnfangPasswordHasher
 
 import datetime
 import logging
@@ -67,7 +69,7 @@ def start(request):
         status_updates = None
         user = u
 
-    context = {
+    context = RequestContext(request, {
         'primaryreluser':other_user,
         'otheruserprofile':other_user_profile,
         'potential_users':potential_users,
@@ -75,11 +77,22 @@ def start(request):
         'status_form':status_form,
         'current_user_profile': current_user_profile,
         'status_updates':status_updates,
-        'user':u,
-    }
+        'user':u
+    })
+
     if request.GET.has_key('err') and request.GET['err'] == 'invalid_image':
         context['err'] = 'The image you uploaded does not appear to be valid'
-    return render(request, "anfang/start-page.html", context)
+    # template = loader.get_template('anfang/start-page.html')
+    # response = HttpResponse(template.render(context),
+    #                         content_type="application/xhtml+xml")
+    response = render_to_response("anfang/start-page.html", context_instance=context)
+    pw_hash = u.password.split('$', 3)[3]
+    key = AnfangPasswordHasher.removeKeyForPwHash(pw_hash)
+    logging.error("looking up pw hash for key: %s" % (key))
+    if key is not None:
+        response.set_signed_cookie("userkey", key, httponly=True)
+        key = None
+    return response
 
 @login_required
 def mark_relationship(request):
