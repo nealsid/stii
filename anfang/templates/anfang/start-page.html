@@ -19,7 +19,7 @@ You are in a relationship with {{ primaryreluser }}.<br>
 </form>
 <ul>
 {% for s in status_updates %}
-  <li>{{ s.text }}</li>
+  <li>{{ s.text }} posted by {{ s.posting_user }}</li>
 {% endfor %}
 </ul>
 

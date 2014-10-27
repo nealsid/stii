@@ -41,9 +41,7 @@ for i in range(NUM_USERS/2):
     relationship.save()
     relationships.append(relationship)
 
-profile_pics = ['jay-z.jpg','beyonce.jpg',
-                'bill_gates.jpg','melinda_gates.jpg',
-                'sheryl_sandberg.jpg', 'zuckerberg.jpg']
+profile_pics = ['male-patient.png','female-patient.png']
 
 userprofiles = []
 for i in range(NUM_USERS):

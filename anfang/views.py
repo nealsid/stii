@@ -86,12 +86,12 @@ def start(request):
     # response = HttpResponse(template.render(context),
     #                         content_type="application/xhtml+xml")
     response = render_to_response("anfang/start-page.html", context_instance=context)
-    pw_hash = u.password.split('$', 3)[3]
-    key = AnfangPasswordHasher.removeKeyForPwHash(pw_hash)
-    logging.error("looking up pw hash for key: %s" % (key))
-    if key is not None:
-        response.set_signed_cookie("userkey", key, httponly=True)
-        key = None
+    # pw_hash = u.password.split('$', 3)[3]
+    # key = AnfangPasswordHasher.removeKeyForPwHash(pw_hash)
+    # logging.error("looking up pw hash for key: %s" % (key))
+    # if key is not None:
+    #     response.set_signed_cookie("userkey", key, httponly=True)
+    #     key = None
     return response
 
 @login_required
