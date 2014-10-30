@@ -14,12 +14,19 @@ class UserProfile(models.Model):
     owning_user_path = "user"
 
     user = models.OneToOneField(User)
-    profile_picture = models.ImageField(null=True)
-    primary_relationship = models.ForeignKey('UserRelationship', null = True)
+    profile_picture = models.OneToOneField('UserPicture', null=True)
+    primary_relationship = models.ForeignKey('UserRelationship', null=True)
     relationships = models.ManyToManyField('UserRelationship', related_name="secondary")
 
     def __unicode__(self):
-        return "%(email)s in a relationship with id: %(id)d" % {"email":self.user.email,"id":self.primary_relationship_id}
+        return ("%(email)s in a relationship with id: %(id)d"
+                % {"email":self.user.email, "id":self.primary_relationship_id})
+
+class UserPicture(models.Model):
+    owning_user_path = "user_profile"
+
+    user_profile = models.ForeignKey(UserProfile)
+    picture = models.ImageField(help_text="Upload a profile picture here.")
 
 class UserRelationship(models.Model):
     title = models.CharField(max_length = 25)
@@ -36,3 +43,6 @@ class StatusUpdate(models.Model):
 
     def __unicode__(self):
         return "%(text)s by %(user)s" % {"text":self.text,"user":self.posting_user}
+
+class UploadedPicture(models.Model):
+    picture = models.ImageField()

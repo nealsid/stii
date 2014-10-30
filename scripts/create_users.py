@@ -58,7 +58,7 @@ for i in range(NUM_USERS):
         logging.error("Could not log in " + users[i].username + ", skipping profile picture upload")
     profile_pic_name = profile_pics[i % len(profile_pics)]
     with open(profile_pic_name) as fp:
-        resp = client.post(reverse("anfang:picture_save"), {'name':'profile_picture', 'profile_picture': fp})
+        resp = client.post(reverse("anfang:picture_save"), {'name':'picture', 'picture': fp})
     if resp.status_code == 302:
         if resp['Location'].find("err=invalid_image") == -1:
             logging.info("Uploaded pic for user " + users[i].username)

@@ -1,10 +1,15 @@
 from django.forms import ModelForm
-from models import UserProfile, StatusUpdate
+from models import UserProfile, UserPicture, StatusUpdate, UploadedPicture
 
 class ProfilePicForm(ModelForm):
     class Meta:
-        model = UserProfile
-        fields = ['profile_picture']
+        model = UserPicture
+        fields = ['picture']
+
+class UploadedPictureForm(ModelForm):
+    class Meta:
+        model = UploadedPicture
+        fields = ['picture']
 
 class StatusUpdateForm(ModelForm):
     class Meta:

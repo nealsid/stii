@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.template import RequestContext, loader
 
-from forms import ProfilePicForm, StatusUpdateForm
-from models import UserProfile, UserRelationship, StatusUpdate
+from forms import ProfilePicForm, StatusUpdateForm, UploadedPictureForm
+from models import UploadedPicture, UserProfile, UserRelationship, StatusUpdate
 from hashers import AnfangPasswordHasher
 
 import datetime
@@ -33,15 +33,42 @@ def new_status(request):
 @login_required
 def picture_save(request):
     if request.method == 'POST':
-        form = ProfilePicForm(request.POST, request.FILES, instance=request.user.userprofile)
+        form = ProfilePicForm(request.POST, request.FILES,
+                              instance=request.user.userprofile.profile_picture)
         if form.is_valid():
             # file is saved
             logging.info("Saving new profile picture for " + str(request.user))
-            form.save()
+            pic = form.save(commit=False)
+            pic.user_profile = request.user.userprofile
+            u = request.user
+            pic.save()
+            u.userprofile.profile_picture = pic
+            u.userprofile.save()
             return HttpResponseRedirect('/anfang/start')
         else:
-            logging.warning("Invalid profile picture for " + str(request.user))
+            logging.warning("Invalid profile picture for " + str(request.user) + ".  " + str(form.errors))
             return HttpResponseRedirect('/anfang/start?err=invalid_image')
+
+@login_required
+def picture_edit(request):
+    pid = request.GET['pid']
+    pToEdit = UploadedPicture.objects.get(id=pid)
+    context = RequestContext(request, {
+        'pic_url' : pToEdit.picture.url,
+        'pic': pToEdit,
+        'img_height': pToEdit.picture.height,
+        'img_width': pToEdit.picture.width,
+    })
+    return render_to_response("anfang/picture-edit.html",
+                              context_instance=context)
+
+@login_required
+def picture_upload_for_editing(request):
+    if request.method == "POST":
+        form = UploadedPictureForm(request.POST, request.FILES)
+        if form.is_valid():
+            pic = form.save()
+            return HttpResponseRedirect("/anfang/edit?pid=" + str(pic.id))
 
 def handle_uploaded_file(f):
     with open('/tmp/foo.png', 'wb+') as destination:
@@ -51,7 +78,7 @@ def handle_uploaded_file(f):
 @login_required
 def start(request):
     u = request.user
-    picform = ProfilePicForm(instance=u)
+    picform = UploadedPictureForm()
     status_form = StatusUpdateForm()
     if hasattr(u, "userprofile"):
         primary_rel = u.userprofile.primary_relationship
@@ -71,7 +98,7 @@ def start(request):
 
     context = RequestContext(request, {
         'primaryreluser':other_user,
-        'otheruserprofile':other_user_profile,
+        'other_user_profile':other_user_profile,
         'potential_users':potential_users,
         'picform':picform,
         'status_form':status_form,

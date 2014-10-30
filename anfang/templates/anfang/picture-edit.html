@@ -1,0 +1,24 @@
+{% extends "anfang/bootstrap-generic.html" %}
+{% block extraheader %}
+{% load staticfiles %}
+<script src={% static "js/croptastic.js" %}></script>
+<script src={% static "js/imagesloaded.pkgd.js" %}></script>
+<script>
+ $(document).ready(function() {
+   c = new Croptasticr(document.getElementById("picture-container"));
+   c.setup('{{ pic_url }}');
+ });
+</script>
+{% endblock %}
+{% block body %}
+<div class="row">
+  <div class="col-md-2">
+  </div>
+  <div class="col-md-8">
+    <div id="picture-container" class="text-center" style="height: 1200px">
+    </div>
+  </div>
+  <div class="col-md-2">
+  </div>
+</div>
+{% endblock %}
