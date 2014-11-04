@@ -1,6 +1,6 @@
 "use strict";
 
-function Croptasticr(parentNode) {
+function Croptasticr(parentNode, previewNode) {
   this.parentNode = parentNode;
   this.paper = null;
   this.viewportCenterX = null;
@@ -9,12 +9,63 @@ function Croptasticr(parentNode) {
   this.height = null;
   this.viewportElement = null;
   this.shadeElement = null;
-  // The event handlers given window-relative coordinates, so store
+  // The event handlers give window-relative coordinates, so store
   // the origin of the paper (in window-coordinates) to subtract from
   // event handler coordinates.
   this.xoffset = null;
   this.yoffset = null;
-}
+  if (previewNode.tagName.toLowerCase() != "canvas") {
+    alert("Preview widget needs to be canvas");
+  }
+  this.previewNode = previewNode;
+  // This stores a corresponding IMG DOM object for the IMAGE one that
+  // Raphael creates (the Raphael one is SVG-specific).
+  this.imageForRaphaelSVGImage = null;
+  this.svgImage = null;
+  this.drawingContext = null;
+  this.widthMultiplier = null;
+  this.heightMultiplier = null;
+
+};
+
+Croptasticr.prototype.setup = function(pic_url) {
+  this.paper = Raphael(this.parentNode);
+  var boundingRect = this.parentNode.getBoundingClientRect();
+  this.xoffset = boundingRect.left + window.scrollX;
+  this.yoffset = boundingRect.top + window.scrollY;
+  this.width = boundingRect.width;
+  this.height = boundingRect.height;
+  this.svgImage = this.paper.image(pic_url, 0, 0, this.width, this.height);
+
+  this.viewportCenterX  = this.width / 2;
+  this.viewportCenterY = this.height / 2;
+  this.setupViewport();
+  if (this.previewNode != null) {
+    this.previewNode.height = this.paper.height;
+    this.previewNode.width = this.paper.width;
+    this.imageForRaphaelSVGImage = document.createElement("IMG");
+    this.imageForRaphaelSVGImage.src = this.svgImage.attr("src");
+    this.drawingContext = this.previewNode.getContext("2d");
+  }
+};
+
+Croptasticr.prototype.updatePreview = function() {
+  if (this.widthMultiplier == null) {
+    this.widthMultiplier = 1 / (this.svgImage.attr("width") / this.imageForRaphaelSVGImage.width);
+  }
+
+  if (this.heightMultiplier == null) {
+    this.heightMultiplier = 1 / (this.svgImage.attr("height") / this.imageForRaphaelSVGImage.height);
+  }
+  this.drawingContext.clearRect(0, 0, 500, 500);
+  var image_coordinate_ul_x = (this.viewportCenterX - 50) * this.widthMultiplier;
+  var image_coordinate_ul_y = (this.viewportCenterY - 50) * this.heightMultiplier;
+  this.drawingContext.drawImage(this.imageForRaphaelSVGImage,
+				image_coordinate_ul_x, // start x
+				image_coordinate_ul_y, // start y
+				100 * this.widthMultiplier,  100 * this.heightMultiplier,  // width, height
+				0, 0, 500, 500); // destination rectangle
+};
 
 Croptasticr.prototype.pointsToSVGPolygonString = function(points) {
   var svgstring = "M" + points[0]['x'] + "," + points[0]['y'] + " ";
@@ -25,28 +76,39 @@ Croptasticr.prototype.pointsToSVGPolygonString = function(points) {
   return svgstring;
 };
 
+Croptasticr.prototype.squareAroundPoint = function(x, y, sideLength) {
+  var points = [{'x' : x - sideLength, 'y' : y - sideLength},  // upper left
+		{'x' : x + sideLength, 'y' : y - sideLength},  // upper right
+		{'x' : x + sideLength, 'y' : y + sideLength},  // lower right
+		{'x' : x - sideLength, 'y' : y + sideLength}]; // lower left
+  return points;
+};
+
 Croptasticr.prototype.drawViewport = function() {
   var centerX = this.viewportCenterX;
   var centerY = this.viewportCenterY;
-  var viewport_ul = {'x' : centerX - 50, 'y' : centerY - 50};
-  var viewport_ur = {'x' : centerX + 50, 'y' : centerY - 50};
-  var viewport_lr = {'x' : centerX + 50, 'y' : centerY + 50};
-  var viewport_ll = {'x' : centerX - 50, 'y' : centerY + 50};
-  var innerPolyPoints = [viewport_ul,
-			 viewport_ur,
-			 viewport_lr,
-			 viewport_ll];
+
+  var innerPolyPoints = this.squareAroundPoint(centerX, centerY, 50);
+
   var viewportSVG = this.pointsToSVGPolygonString(innerPolyPoints);
+
   this.viewportElement = this.paper.path(viewportSVG).attr("fill",
 							   "transparent");
-  console.log("viewport: " + viewportSVG);
+  // Draw resize handles.
+  var handle_side_length = 5;
+  var lr_handle_points = this.squareAroundPoint(innerPolyPoints[2]['x'],
+						innerPolyPoints[2]['y'],
+						handle_side_length);
+  var handle_svg = this.pointsToSVGPolygonString(lr_handle_points);
+
+  this.paper.path(handle_svg).attr("fill",
+				   "red");
 };
 
 Croptasticr.prototype.moveInnerViewport = function(dx, dy) {
   var xformString = "t" + dx + "," + dy;
   this.viewportElement.transform("..." + xformString);
-  console.log("transform SVG: " + xformString);
-  console.log("current xform: " + this.viewportElement.transform());
+  this.updatePreview();
 };
 
 Croptasticr.prototype.drawShadeElement = function() {
@@ -93,7 +155,6 @@ Croptasticr.prototype.setupViewport = function() {
     this.shadeElement.remove();
     this.shadeElement = null;
   }
-  console.log("initial viewport center: (" + this.viewportCenterX + "," + this.viewportCenterY + ")");
 
   this.drawShadeElement();
   this.drawViewport();
@@ -105,28 +166,10 @@ Croptasticr.prototype.setupViewport = function() {
     croptasticr.viewportCenterY += realDY;
     croptasticr.lastx = x;
     croptasticr.lasty = y;
-    console.log("new viewport center: (" + croptasticr.viewportCenterX + "," + croptasticr.viewportCenterY + ")");
-//    console.log(croptasticr.viewportCenterX + " / " + croptasticr.viewportCenterY + " / " + (croptasticr.viewportCenterX + dx) + " / " + (croptasticr.viewportCenterY + dy) + " / " + (x - croptasticr.xoffset) + " / " + (y - croptasticr.yoffset));
-
     croptasticr.moveInnerViewport(realDX, realDY);
     croptasticr.drawShadeElement();
   }, function(x, y, e) {
     croptasticr.lastx = x;
     croptasticr.lasty = y;
   });
-};
-
-Croptasticr.prototype.setup = function(pic_url) {
-  this.paper = Raphael(this.parentNode);
-  var boundingRect = this.parentNode.getBoundingClientRect();
-  this.xoffset = boundingRect.left + window.scrollX;
-  this.yoffset = boundingRect.top + window.scrollY;
-  console.log(window);
-  this.width = boundingRect.width;
-  this.height = boundingRect.height;
-  this.paper.image(pic_url, 0, 0, this.width, this.height);
-
-  this.viewportCenterX  = this.width / 2;
-  this.viewportCenterY = this.height / 2;
-  this.setupViewport();
 };
