@@ -40,6 +40,7 @@ function Croptasticr(parentNode, previewNode) {
   this.heightMultiplier = null;
   this.sideLengthX = null;
   this.sideLengthY = null;
+  this.viewportSizeThreshold = 20;
 }
 
 Croptasticr.prototype.setup = function (pic_url) {
@@ -152,12 +153,37 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
     var viewport_ul_y =
           croptasticr.viewportElement.matrix.y(croptasticr.viewportElement.attrs.path[0][1],
                                                croptasticr.viewportElement.attrs.path[0][2]);
+    // dx/dy from Raphael are the changes in x/y from the drag start,
+    // not the most recent change of the mouse.  Since we want to
+    // track the mouse cursor as the user moves it, we need to figure
+    // out the change from the last drag event we got, not the start
+    // of the drag.  We store the last x/y we've received in
+    // Croptasticr.last{x,y}, which is the same as what the viewport
+    // drag does, so we're counting on this code and the code inside
+    // the viewport drag never being executed at the same time, as
+    // they would clobber each other's state.
     var realDX = mouseX - croptasticr.lastx;
     var realDY = mouseY - croptasticr.lasty;
-    croptasticr.scaleViewport(mouseX - viewport_ul_x, mouseY - viewport_ul_y);
-    croptasticr.lastx = mouseX;
-    croptasticr.lasty = mouseY;
-    croptasticr.moveResizeHandle(realDX, realDY);
+    var newViewportX = mouseX - viewport_ul_x;
+    var newViewportY = mouseY - viewport_ul_y;
+    if (newViewportX < croptasticr.viewportSizeThreshold &&
+       newViewportY < croptasticr.viewportSizeThreshold) {
+      return;
+    }
+    if (newViewportX < croptasticr.viewportSizeThreshold) {
+      croptasticr.scaleViewport(croptasticr.viewportSizeThreshold, newViewportY);
+      croptasticr.lasty = mouseY;
+      croptasticr.moveResizeHandle(0, realDY);
+    } else if (newViewportY < croptasticr.viewportSizeThreshold) {
+      croptasticr.scaleViewport(newViewportX, croptasticr.viewportSizeThreshold);
+      croptasticr.lastx = mouseX;
+      croptasticr.moveResizeHandle(realDX, 0);
+    } else {
+      croptasticr.scaleViewport(newViewportX, newViewportY);
+      croptasticr.lastx = mouseX;
+      croptasticr.lasty = mouseY;
+      croptasticr.moveResizeHandle(realDX, realDY);
+    }
     croptasticr.drawShadeElement();
     croptasticr.updatePreview();
   }, function (x, y, e) {
@@ -170,11 +196,6 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
 };
 
 Croptasticr.prototype.drawViewport = function () {
-  if (this.viewportElement !== null) {
-    this.viewportElement.remove();
-    this.viewportElement = null;
-  }
-
   var centerX = this.viewportCenterX;
   var centerY = this.viewportCenterY;
   var innerPolyPoints = this.rectangleAroundPoint(centerX, centerY,
@@ -183,6 +204,11 @@ Croptasticr.prototype.drawViewport = function () {
   var viewportSVG = this.pointsToSVGPolygonString(innerPolyPoints);
   var croptasticr = this;
   var st;
+
+  if (this.viewportElement !== null) {
+    this.viewportElement.remove();
+    this.viewportElement = null;
+  }
 
   this.viewportElement = this.paper.path(viewportSVG).attr("fill",
                                                            "transparent");
@@ -215,8 +241,8 @@ Croptasticr.prototype.scaleViewport = function (newSideLengthX, newSideLengthY) 
 
   var multiplierX = newSideLengthX / this.sideLengthX;
   var multiplierY = newSideLengthY / this.sideLengthY;
-  this.sideLengthX = newSideLengthX;
 
+  this.sideLengthX = newSideLengthX;
   this.sideLengthY = newSideLengthY;
 
   var viewport_ul = {
@@ -238,6 +264,8 @@ Croptasticr.prototype.scaleViewport = function (newSideLengthX, newSideLengthY) 
   };
   this.viewportCenterX = viewport_ul.x + (newSideLengthX / 2);
   this.viewportCenterY = viewport_ul.y + (newSideLengthY / 2);
+  console.log("new side lengths: " + newSideLengthX + "," + newSideLengthY);
+  console.log("new center: " + this.viewportCenterX + "," + this.viewportCenterY);
 };
 
 Croptasticr.prototype.moveInnerViewport = function (dx, dy) {
