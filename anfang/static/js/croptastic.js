@@ -167,7 +167,7 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
     var newViewportX = mouseX - viewport_ul_x;
     var newViewportY = mouseY - viewport_ul_y;
     if (newViewportX < croptasticr.viewportSizeThreshold &&
-       newViewportY < croptasticr.viewportSizeThreshold) {
+        newViewportY < croptasticr.viewportSizeThreshold) {
       return;
     }
     if (newViewportX < croptasticr.viewportSizeThreshold) {
