@@ -36,7 +36,8 @@ function Croptasticr(parentNode, previewNode) {
   this.drawingContext = null;
   this.widthMultiplier = null;
   this.heightMultiplier = null;
-  this.sideLength = null;
+  this.sideLengthX = null;
+  this.sideLengthY = null;
 };
 
 Croptasticr.prototype.setup = function(pic_url) {
@@ -50,7 +51,8 @@ Croptasticr.prototype.setup = function(pic_url) {
 
   this.viewportCenterX  = this.width / 2;
   this.viewportCenterY = this.height / 2;
-  this.sideLength = 100;
+  this.sideLengthX = 100;
+  this.sideLengthY = 100;
   this.setupViewport();
   if (this.previewNode != null) {
     this.previewNode.height = this.paper.height;
@@ -70,13 +72,13 @@ Croptasticr.prototype.updatePreview = function() {
     this.heightMultiplier = 1 / (this.svgImage.attr("height") / this.imageForRaphaelSVGImage.height);
   }
   this.drawingContext.clearRect(0, 0, 500, 500);
-  var image_coordinate_ul_x = (this.viewportCenterX - (this.sideLength / 2)) * this.widthMultiplier;
-  var image_coordinate_ul_y = (this.viewportCenterY - (this.sideLength / 2)) * this.heightMultiplier;
+  var image_coordinate_ul_x = (this.viewportCenterX - (this.sideLengthX / 2)) * this.widthMultiplier;
+  var image_coordinate_ul_y = (this.viewportCenterY - (this.sideLengthY / 2)) * this.heightMultiplier;
   this.drawingContext.drawImage(this.imageForRaphaelSVGImage,
                                 image_coordinate_ul_x, // start x
                                 image_coordinate_ul_y, // start y
-                                this.sideLength * this.widthMultiplier, // width of source rect
-                                this.sideLength * this.heightMultiplier, // height of source rect
+                                this.sideLengthX * this.widthMultiplier, // width of source rect
+                                this.sideLengthY * this.heightMultiplier, // height of source rect
                                 0, 0, 500, 500); // destination rectangle
 };
 
@@ -87,6 +89,25 @@ Croptasticr.prototype.pointsToSVGPolygonString = function(points) {
   }
   svgstring += "Z";
   return svgstring;
+};
+
+// Returns an array of points that represent a rectangle with sides
+// length sideLength{X,Y} around (x,y).  The points are returned in
+// clockwise order starting from the upper left.
+Croptasticr.prototype.rectangleAroundPoint = function(x, y, sideLengthX, sideLengthY) {
+  var halfXSideLength = sideLengthX / 2;
+  var halfYSideLength = sideLengthY / 2;
+  return [{'x' : x - halfXSideLength,   // upper left
+           'y' : y - halfYSideLength},
+
+          {'x' : x + halfXSideLength,   // upper right
+           'y' : y - halfYSideLength},
+
+          {'x' : x + halfXSideLength,   // lower right
+           'y' : y + halfYSideLength},
+
+          {'x' : x - halfXSideLength,   // lower left
+           'y' : y + halfYSideLength}];
 };
 
 // Returns an array of points that represent a square with sides
@@ -125,8 +146,11 @@ Croptasticr.prototype.drawResizeHandle = function(x, y) {
     var viewport_ul_x =
           croptasticr.viewportElement.matrix.x(croptasticr.viewportElement.attrs.path[0][1],
                                                croptasticr.viewportElement.attrs.path[0][2]);
+    var viewport_ul_y =
+          croptasticr.viewportElement.matrix.y(croptasticr.viewportElement.attrs.path[0][1],
+                                               croptasticr.viewportElement.attrs.path[0][2]);
     console.log("inside handle drag");
-    croptasticr.scaleViewport(mouseX - viewport_ul_x);
+    croptasticr.scaleViewport(mouseX - viewport_ul_x, mouseY - viewport_ul_y);
     var realDX = mouseX - croptasticr.lastx;
     var realDY = mouseY - croptasticr.lasty;
     croptasticr.lastx = mouseX;
@@ -138,6 +162,7 @@ Croptasticr.prototype.drawResizeHandle = function(x, y) {
     croptasticr.lastx = x;
     croptasticr.lasty = y;
   });
+  lr_handle.toFront();
   return lr_handle;
 };
 
@@ -150,8 +175,9 @@ Croptasticr.prototype.drawViewport = function() {
   var centerX = this.viewportCenterX;
   var centerY = this.viewportCenterY;
 
-  var innerPolyPoints = this.squareAroundPoint(centerX, centerY,
-                                               this.sideLength);
+  var innerPolyPoints = this.rectangleAroundPoint(centerX, centerY,
+                                                  this.sideLengthX,
+                                                  this.sideLengthY);
 
   var viewportSVG = this.pointsToSVGPolygonString(innerPolyPoints);
 
@@ -182,9 +208,14 @@ Croptasticr.prototype.drawViewport = function() {
   this.viewportElementAndHandlesSet = st;
 };
 
-Croptasticr.prototype.scaleViewport = function(newSideLength) {
-  var multiplier = newSideLength / this.sideLength;
-  this.sideLength = newSideLength;
+Croptasticr.prototype.scaleViewport = function(newSideLengthX, newSideLengthY) {
+
+  var multiplierX = newSideLengthX / this.sideLengthX;
+  this.sideLengthX = newSideLengthX;
+
+  var multiplierY = newSideLengthY / this.sideLengthY;
+  this.sideLengthY = newSideLengthY;
+
   var viewport_ul =
         {
           'x':this.viewportElement.matrix.x(this.viewportElement.attrs.path[0][1],
@@ -192,16 +223,18 @@ Croptasticr.prototype.scaleViewport = function(newSideLength) {
           'y':this.viewportElement.matrix.y(this.viewportElement.attrs.path[0][1],
                                             this.viewportElement.attrs.path[0][2])
         };
-  var scaleString = "S" + multiplier + "," +
-        multiplier + "," + viewport_ul['x'] + "," + viewport_ul['y'];
+  var scaleString = "S" + multiplierX + "," +
+        multiplierY + "," + viewport_ul['x'] + "," + viewport_ul['y'];
   this.viewportElement.transform("..." + scaleString);
-  var newx = this.viewportElement.matrix.x(this.viewportElement.attrs.path[0][1], this.viewportElement.attrs.path[0][2]);
-  var newy = this.viewportElement.matrix.y(this.viewportElement.attrs.path[0][1], this.viewportElement.attrs.path[0][2]);
+  console.log(scaleString);
+  var newx = this.viewportElement.matrix.x(this.viewportElement.attrs.path[0][1],
+                                           this.viewportElement.attrs.path[0][2]);
+  var newy = this.viewportElement.matrix.y(this.viewportElement.attrs.path[0][1],
+                                           this.viewportElement.attrs.path[0][2]);
   viewport_ul = {'x':newx,
                  'y':newy};
-  this.viewportCenterX = viewport_ul['x'] + (newSideLength / 2);
-  this.viewportCenterY = viewport_ul['y'] + (newSideLength / 2);
-  console.log("new center: " + this.viewportCenterX + "," + this.viewportCenterY);
+  this.viewportCenterX = viewport_ul['x'] + (newSideLengthX / 2);
+  this.viewportCenterY = viewport_ul['y'] + (newSideLengthY / 2);
   // transform handle.
   var viewport_lr =
         {
@@ -214,14 +247,13 @@ Croptasticr.prototype.scaleViewport = function(newSideLength) {
 };
 
 Croptasticr.prototype.moveInnerViewport = function(dx, dy) {
-  var xformString = "t" + dx + "," + dy;
-  console.log(xformString);
+  var xformString = "T" + dx + "," + dy;
   this.viewportElementAndHandlesSet.transform("..." + xformString);
   this.updatePreview();
 };
 
 Croptasticr.prototype.moveResizeHandle = function(dx, dy) {
-  var xformString = "t" + dx + "," + dy;
+  var xformString = "T" + dx + "," + dy;
   console.log(xformString);
   this.lr_handle.transform("..." + xformString);
 };
@@ -236,7 +268,7 @@ Croptasticr.prototype.drawShadeElement = function() {
   var fillOpacity = .7;
   var centerX = this.viewportCenterX;
   var centerY = this.viewportCenterY;
-  var viewport_points = this.squareAroundPoint(centerX, centerY, this.sideLength);
+  var viewport_points = this.rectangleAroundPoint(centerX, centerY, this.sideLengthX, this.sideLengthY);
   var outerPolyPoints = [{'x' : 0, 'y' : 0},
                          {'x' : this.width, 'y' : 0},
                          {'x' : this.width, 'y' : this.height},
@@ -249,6 +281,8 @@ Croptasticr.prototype.drawShadeElement = function() {
   var polySVG = this.pointsToSVGPolygonString(outerPolyPoints);
   polySVG += this.pointsToSVGPolygonString(innerPolyPoints);
   this.shadeElement = this.paper.path(polySVG).attr("fill",polyFill).attr("opacity", fillOpacity);
+  this.shadeElement.toBack();
+  this.svgImage.toBack();
 //  console.log(polySVG);
 };
 
