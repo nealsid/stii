@@ -16,6 +16,7 @@ function Croptasticr(parentNode, previewNode) {
   // one element when the viewport is dragged by the user.
   this.viewportElementAndHandlesSet = null;
   this.lr_handle = null;
+  this.handle_side_length = 15;
   // The outer element that is shaded, to indicate to users which
   // parts of the image aren't currently included.
   this.shadeElement = null;
@@ -71,6 +72,9 @@ Croptasticr.prototype.updatePreview = function () {
   if (this.previewNode === null) {
     return;
   }
+  // We set these once by comparing with NULL here because we don't
+  // know if the image has actually been loaded yet in the setup
+  // function.
   if (this.widthMultiplier === null) {
     this.widthMultiplier = this.imageForRaphaelSVGImage.width / this.svgImage.attr("width");
   }
@@ -156,13 +160,12 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
     this.lr_handle.remove();
     this.lr_handle = null;
   }
-  var handle_side_length = 10;
   var lr_handle_points = this.squareAroundPoint(x,
                                                 y,
-                                                handle_side_length);
+                                                this.handle_side_length);
   var handle_svg = this.pointsToSVGPolygonString(lr_handle_points);
   var lr_handle = this.paper.path(handle_svg).attr("fill",
-                                                   "darkred");
+                                                   "#949393").attr("opacity", ".7");
   var croptasticr = this;
   /*jslint unparam: true*/
   lr_handle.drag(function (dx, dy, mouseX, mouseY, e) {
@@ -233,8 +236,8 @@ Croptasticr.prototype.drawViewport = function () {
   this.viewportElement = this.paper.path(viewportSVG).attr("fill",
                                                            "transparent");
   // Draw resize handles.
-  this.lr_handle = this.drawResizeHandle(innerPolyPoints[2].x,
-                                         innerPolyPoints[2].y);
+  this.lr_handle = this.drawResizeHandle(innerPolyPoints[2].x - (this.handle_side_length / 2),
+                                         innerPolyPoints[2].y - (this.handle_side_length / 2));
 
   /*jslint unparam: true*/
   this.viewportElement.drag(function (dx, dy, x, y, e) {
@@ -305,8 +308,8 @@ Croptasticr.prototype.positionLRResizeHandle = function () {
                                             this.lr_handle.attrs.path[0][2]);
   var lr_handle_y = this.lr_handle.matrix.y(this.lr_handle.attrs.path[0][1],
                                             this.lr_handle.attrs.path[0][2]);
-  var dx = viewport_lr_x - lr_handle_x;
-  var dy = viewport_lr_y - lr_handle_y;
+  var dx = viewport_lr_x - this.handle_side_length - lr_handle_x;
+  var dy = viewport_lr_y - this.handle_side_length - lr_handle_y;
   var xformString = "T" + dx + "," + dy;
   this.lr_handle.transform("..." + xformString);
 };
@@ -327,7 +330,7 @@ Croptasticr.prototype.drawShadeElement = function () {
                          {'x' : 0, 'y' : this.height}];
   // Note the order of the points - it's required to go counter
   // clockwise with Raphael so that it considers this a subtraction
-  // from the outer poly.
+  // from the outer polygon.
   var innerPolyPoints = viewport_points.reverse();
 
   var polySVG = this.pointsToSVGPolygonString(outerPolyPoints);
