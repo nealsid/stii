@@ -173,16 +173,16 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
     if (newViewportX < croptasticr.viewportSizeThreshold) {
       croptasticr.scaleViewport(croptasticr.viewportSizeThreshold, newViewportY);
       croptasticr.lasty = mouseY;
-      croptasticr.moveResizeHandle(0, realDY);
+      croptasticr.positionLRResizeHandle();
     } else if (newViewportY < croptasticr.viewportSizeThreshold) {
       croptasticr.scaleViewport(newViewportX, croptasticr.viewportSizeThreshold);
       croptasticr.lastx = mouseX;
-      croptasticr.moveResizeHandle(realDX, 0);
+      croptasticr.positionLRResizeHandle();
     } else {
       croptasticr.scaleViewport(newViewportX, newViewportY);
       croptasticr.lastx = mouseX;
       croptasticr.lasty = mouseY;
-      croptasticr.moveResizeHandle(realDX, realDY);
+      croptasticr.positionLRResizeHandle();
     }
     croptasticr.drawShadeElement();
     croptasticr.updatePreview();
@@ -274,7 +274,19 @@ Croptasticr.prototype.moveInnerViewport = function (dx, dy) {
   this.updatePreview();
 };
 
-Croptasticr.prototype.moveResizeHandle = function (dx, dy) {
+Croptasticr.prototype.positionLRResizeHandle = function() {
+  var viewport_lr_x =
+        this.viewportElement.matrix.x(this.viewportElement.attrs.path[2][1],
+                                      this.viewportElement.attrs.path[2][2]);
+  var viewport_lr_y =
+        this.viewportElement.matrix.y(this.viewportElement.attrs.path[2][1],
+                                      this.viewportElement.attrs.path[2][2]);
+  var lr_handle_x = this.lr_handle.matrix.x(this.lr_handle.attrs.path[0][1],
+					    this.lr_handle.attrs.path[0][2]);
+  var lr_handle_y = this.lr_handle.matrix.y(this.lr_handle.attrs.path[0][1],
+					    this.lr_handle.attrs.path[0][2]);
+  var dx = viewport_lr_x - lr_handle_x;
+  var dy = viewport_lr_y - lr_handle_y;
   var xformString = "T" + dx + "," + dy;
   this.lr_handle.transform("..." + xformString);
 };
