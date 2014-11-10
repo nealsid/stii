@@ -127,17 +127,7 @@ Croptasticr.prototype.rectangleAroundPoint = function (x, y, sideLengthX, sideLe
 // clockwise order starting from the upper left.
 Croptasticr.prototype.squareAroundPoint = function (x, y, sideLength) {
   var halfSideLength = sideLength / 2;
-  return [{'x' : x - halfSideLength,   // upper left
-           'y' : y - halfSideLength},
-
-          {'x' : x + halfSideLength,   // upper right
-           'y' : y - halfSideLength},
-
-          {'x' : x + halfSideLength,   // lower right
-           'y' : y + halfSideLength},
-
-          {'x' : x - halfSideLength,   // lower left
-           'y' : y + halfSideLength}];
+  return this.rectangleAroundPoint(x, y, sideLength, sideLength);
 };
 
 Croptasticr.prototype.setCursorsForResize = function () {
