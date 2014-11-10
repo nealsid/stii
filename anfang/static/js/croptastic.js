@@ -25,7 +25,8 @@ function Croptasticr(parentNode, previewNode) {
   this.xoffset = null;
   this.yoffset = null;
 
-  if (previewNode.tagName.toLowerCase() !== "canvas") {
+  if (previewNode !== null &&
+      previewNode.tagName.toLowerCase() !== "canvas") {
     alert("Preview widget needs to be canvas");
   }
 
@@ -67,6 +68,9 @@ Croptasticr.prototype.setup = function (pic_url) {
 };
 
 Croptasticr.prototype.updatePreview = function () {
+  if (this.previewNode === null) {
+    return;
+  }
   if (this.widthMultiplier === null) {
     this.widthMultiplier = this.imageForRaphaelSVGImage.width / this.svgImage.attr("width");
   }
@@ -132,6 +136,21 @@ Croptasticr.prototype.squareAroundPoint = function (x, y, sideLength) {
            'y' : y + halfSideLength}];
 };
 
+Croptasticr.prototype.setCursorsForResize = function () {
+  // We have to change the body cursor here because if we don't, the
+  // browser will change the cursor to the non-drag one even if the
+  // drag is ongoing while the mouse moves over another element.
+  this.oldBodyCursor = document.getElementsByTagName("body")[0].style.cursor;
+  document.getElementsByTagName("body")[0].style.cursor = "nwse-resize";
+  this.oldViewportCursor = this.viewportElement.node.style.cursor;
+  this.viewportElement.node.style.cursor = "nwse-resize";
+};
+
+Croptasticr.prototype.setCursorsForResizeEnd = function () {
+  document.getElementsByTagName("body")[0].style.cursor = this.oldBodyCursor;
+  this.viewportElement.node.style.cursor = this.oldViewportCursor;
+};
+
 Croptasticr.prototype.drawResizeHandle = function (x, y) {
   if (this.lr_handle !== null) {
     this.lr_handle.remove();
@@ -162,8 +181,6 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
     // drag does, so we're counting on this code and the code inside
     // the viewport drag never being executed at the same time, as
     // they would clobber each other's state.
-    var realDX = mouseX - croptasticr.lastx;
-    var realDY = mouseY - croptasticr.lasty;
     var newViewportX = mouseX - viewport_ul_x;
     var newViewportY = mouseY - viewport_ul_y;
     if (newViewportX < croptasticr.viewportSizeThreshold &&
@@ -189,6 +206,9 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
   }, function (x, y, e) {
     croptasticr.lastx = x;
     croptasticr.lasty = y;
+    croptasticr.setCursorsForResize();
+  }, function (e) {
+    croptasticr.setCursorsForResizeEnd();
   });
   /*jslint unparam: true*/
   lr_handle.toFront();
@@ -235,6 +255,8 @@ Croptasticr.prototype.drawViewport = function () {
   st = this.paper.set();
   st.push(this.viewportElement, this.lr_handle);
   this.viewportElementAndHandlesSet = st;
+  this.viewportElement.node.style.cursor = "-webkit-grabbing";
+  this.lr_handle.node.style.cursor = "nwse-resize";
 };
 
 Croptasticr.prototype.scaleViewport = function (newSideLengthX, newSideLengthY) {
@@ -264,8 +286,6 @@ Croptasticr.prototype.scaleViewport = function (newSideLengthX, newSideLengthY) 
   };
   this.viewportCenterX = viewport_ul.x + (newSideLengthX / 2);
   this.viewportCenterY = viewport_ul.y + (newSideLengthY / 2);
-  console.log("new side lengths: " + newSideLengthX + "," + newSideLengthY);
-  console.log("new center: " + this.viewportCenterX + "," + this.viewportCenterY);
 };
 
 Croptasticr.prototype.moveInnerViewport = function (dx, dy) {
@@ -274,7 +294,7 @@ Croptasticr.prototype.moveInnerViewport = function (dx, dy) {
   this.updatePreview();
 };
 
-Croptasticr.prototype.positionLRResizeHandle = function() {
+Croptasticr.prototype.positionLRResizeHandle = function () {
   var viewport_lr_x =
         this.viewportElement.matrix.x(this.viewportElement.attrs.path[2][1],
                                       this.viewportElement.attrs.path[2][2]);
@@ -282,9 +302,9 @@ Croptasticr.prototype.positionLRResizeHandle = function() {
         this.viewportElement.matrix.y(this.viewportElement.attrs.path[2][1],
                                       this.viewportElement.attrs.path[2][2]);
   var lr_handle_x = this.lr_handle.matrix.x(this.lr_handle.attrs.path[0][1],
-					    this.lr_handle.attrs.path[0][2]);
+                                            this.lr_handle.attrs.path[0][2]);
   var lr_handle_y = this.lr_handle.matrix.y(this.lr_handle.attrs.path[0][1],
-					    this.lr_handle.attrs.path[0][2]);
+                                            this.lr_handle.attrs.path[0][2]);
   var dx = viewport_lr_x - lr_handle_x;
   var dy = viewport_lr_y - lr_handle_y;
   var xformString = "T" + dx + "," + dy;
@@ -316,7 +336,6 @@ Croptasticr.prototype.drawShadeElement = function () {
   this.shadeElement.toBack();
   this.svgImage.toBack();
 };
-
 
 Croptasticr.prototype.setupViewport = function () {
   this.drawShadeElement();
