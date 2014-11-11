@@ -11,4 +11,5 @@ urlpatterns = patterns(
     url(r'^status-update$', views.new_status, name="new_status"),
     url(r'^upload$', views.picture_upload_for_editing, name="picture_upload"),
     url(r'^edit$', views.picture_edit),
+    url(r'^logout$', views.logout, name="logout_no_confirm"),
 )

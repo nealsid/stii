@@ -127,6 +127,7 @@ PASSWORD_HASHERS = (
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'TIMEOUT': None,
     }
 }
 
