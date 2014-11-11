@@ -1,9 +1,11 @@
-from django.dispatch import receiver
-from django.db.models.signals import post_save
-from django.shortcuts import render, get_object_or_404, render_to_response
-from django.http import HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
+from django.contrib import auth
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, render_to_response
 from django.template import RequestContext, loader
 
 from forms import ProfilePicForm, StatusUpdateForm, UploadedPictureForm
@@ -86,7 +88,7 @@ def start(request):
         other_user = User.objects.filter(userprofile__primary_relationship=primary_rel).exclude(id=u.id)[0]
         other_user_profile = other_user.userprofile
         potential_users = None
-        status_updates = StatusUpdate.objects.filter(relationship=primary_rel).order_by('-time')
+        status_updates = [x for x in StatusUpdate.objects.filter(relationship=primary_rel).order_by('-time') if not x.encrypted]
         user = u
     else:
         other_user = None
@@ -120,6 +122,11 @@ def start(request):
     #     response.set_signed_cookie("userkey", key, httponly=True)
     #     key = None
     return response
+
+def logout(request):
+    if request.user.is_authenticated:
+        auth.logout(request)
+    return HttpResponseRedirect(reverse('account_login'))
 
 @login_required
 def mark_relationship(request):

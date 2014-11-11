@@ -3,38 +3,34 @@
 {% if err %}
 <font color=red>{{ err }} </font><br>
 {% endif %}
-{% if primaryreluser %}
-Hello, {{ user.username }}!<br>
-You are in a relationship with {{ primaryreluser }}.<br>
-
-{% if other_user_profile.profile_picture %}
-<img src="{{ other_user_profile.profile_picture.picture.url }}">
-{% endif %}
-<!--   <input type="file" capture="camera" accept="image/*" id="cameraInput" name="cameraInput"> -->
-
-<form action={% url "anfang:new_status" %} id="new-status"  method="POST">
-  {% csrf_token %}
-  {{ status_form }}
-  <button type="submit" class=btn-primary form="new-status" method="POST">Update</button>
-</form>
-<ul>
-{% for s in status_updates %}
-  <li>{{ s.text }} posted by {{ s.posting_user }}</li>
-{% endfor %}
-</ul>
-
-{% else %}
-Hello, {{ user.username }}, you are NOT in a relationship.<br>
-<ul>
-  {% for one_potential_user in potential_users %}
-  <li> {{ one_potential_user.username }} <a href={% url "anfang:mark_relationship" %}?with_id={{ one_potential_user.id }}>Mark as in a relationship </a> </li>
-  {% endfor %}
-</ul>
-{% endif %}
-<form action={% url "anfang:picture_upload" %} id="picture-upload" method="POST" enctype="multipart/form-data">
-   {% csrf_token %}
-  {{ picform }}
-   <button type="submit" class="btn-primary" form="picture-upload">Go!</button>
- </form>
-
+<div class="row">
+  <div class="col-md-2 col-sm-2">
+  </div>
+  <div class="col-md-4 col-sm-4" align="center">
+    {% if other_user_profile.profile_picture %}
+    <img width="50%" class="img-responsive" src="{{ other_user_profile.profile_picture.picture.url }}">
+    {% endif %}
+  </div>
+  <div class="col-md-4 col-sm-4">
+    <div class="media">
+      <ul class="list-group">
+	{% for s in status_updates %}
+	<li class="list-group-item">
+	  <div class="pull-left media-object">
+	    <img width="50%" class="img-responsive" src={{ s.posting_user.userprofile.profile_picture.picture.url }}>
+	  </div>
+	  <div class ="media-body">
+	    <p class="media-heading" style="word-wrap:break-word;">
+	      {{ s.text }}
+	      <small class="pull-right">{{ s.time }}</small>
+	    </p>
+	  </div>
+	</li>
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-2 col-sm-2">
+  </div>
+</div>
 {% endblock %}
