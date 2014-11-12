@@ -46,3 +46,9 @@ class StatusUpdate(models.Model):
 
 class UploadedPicture(models.Model):
     picture = models.ImageField()
+
+class Place(models.Model):
+    name  = models.CharField(max_length = 50)
+    latitude = models.DecimalField(max_digits=7,decimal_places=5)
+    longitude = models.DecimalField(max_digits=7,decimal_places=5)
+    google_place_id = models.CharField(max_length = 100)
