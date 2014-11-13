@@ -52,3 +52,8 @@ class Place(models.Model):
     latitude = models.DecimalField(max_digits=7,decimal_places=5)
     longitude = models.DecimalField(max_digits=7,decimal_places=5)
     google_place_id = models.CharField(max_length = 100)
+
+    def __unicode__(self):
+        return "%(name)s %(lat)f %(lng)f" % {'name':self.name,
+                                             'lat':self.latitude,
+                                             'lng':self.longitude}
