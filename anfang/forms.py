@@ -1,4 +1,4 @@
-from django.forms import ModelForm
+from django.forms import ModelForm, TextInput
 from models import UserProfile, UserPicture, StatusUpdate, UploadedPicture
 
 class ProfilePicForm(ModelForm):
@@ -15,3 +15,6 @@ class StatusUpdateForm(ModelForm):
     class Meta:
         model = StatusUpdate
         fields = ['text']
+        widgets = {
+            'text':TextInput(attrs={'placeholder':'Write something ridiculous...'})
+        }

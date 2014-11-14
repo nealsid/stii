@@ -10,5 +10,5 @@ urlpatterns = patterns(
     url(r'^anfang/', include('anfang.urls', namespace="anfang")),
     url(r'^admin/', include(admin.site.urls)),
     url(r"^account/", include("account.urls")),
-    url(r"^anfang/", views.index, name='home')
+    url(r"^anfang/", views.start, name='home')
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

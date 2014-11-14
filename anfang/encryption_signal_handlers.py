@@ -45,7 +45,7 @@ def model_post_init(sender, **kwargs):
             if key is None:
                 key = find_key_for_instance(o, key_fetcher)
                 if key is None:
-                    logging.error("Encrypted object for user with no key")
+                    logging.error("Attempting to decrypt object for user with no key")
                     continue
             if crypter is None:
                 crypter = Crypter()
@@ -71,7 +71,7 @@ def model_pre_save(sender, **kwargs):
             if key is None:
                 key = find_key_for_instance(kwargs['instance'], key_fetcher)
                 if key is None:
-                    logging.error("Encrypted object for user with no key")
+                    logging.error("Trying to encrypt object for user, but have no key")
                     continue
             if crypter is None:
                 crypter = Crypter()

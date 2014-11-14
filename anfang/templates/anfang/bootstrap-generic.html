@@ -9,17 +9,7 @@
     <script src={% static "js/jquery-1.10.1.min.js" %}></script>
     <script src={% static "js/bootstrap.min.js" %}></script>
     <script src={% static "js/raphael-min.js" %}></script>
-    <script>
-     function loadGoogleMapsJS() {
-       var script = document.createElement('script');
-       script.type = 'text/javascript';
-       script.src = 'https://maps.googleapis.com/maps/api/js';
-       document.body.appendChild(script);
-     };
-     $(document).ready(function() {
-       loadGoogleMapsJS();
-     });
-    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?libraries=places"></script>
     <style>
       body {
       min-height: 2000px;

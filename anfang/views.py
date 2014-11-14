@@ -9,28 +9,27 @@ from django.shortcuts import render, get_object_or_404, render_to_response
 from django.template import RequestContext, loader
 
 from forms import ProfilePicForm, StatusUpdateForm, UploadedPictureForm
-from models import UploadedPicture, UserProfile, UserRelationship, StatusUpdate
 from hashers import AnfangPasswordHasher
+from key_management import user_login_and_key_required
+from models import UploadedPicture, UserProfile, UserRelationship, StatusUpdate
 
 import datetime
 import logging
-
-# Create your views here.
-def index(request):
-    return render(request, 'anfang/index.html')
 
 @login_required
 def new_status(request):
     if request.method == 'POST':
         form = StatusUpdateForm(request.POST)
         if form.is_valid():
-            logging.info("Saving status update")
+            logging.error("Saving status update")
             status_update = form.save(commit=False)
             status_update.relationship = request.user.userprofile.primary_relationship
             status_update.posting_user = request.user
             status_update.time = datetime.datetime.now()
             status_update.save()
-    return HttpResponseRedirect("/anfang/start")
+        else:
+            logging.error(form.errors)
+    return HttpResponseRedirect(reverse('start'))
 
 @login_required
 def picture_save(request):
@@ -77,7 +76,7 @@ def handle_uploaded_file(f):
         for chunk in f.chunks():
             destination.write(chunk)
 
-@login_required
+@user_login_and_key_required
 def start(request):
     u = request.user
     picform = UploadedPictureForm()
@@ -111,16 +110,7 @@ def start(request):
 
     if request.GET.has_key('err') and request.GET['err'] == 'invalid_image':
         context['err'] = 'The image you uploaded does not appear to be valid'
-    # template = loader.get_template('anfang/start-page.html')
-    # response = HttpResponse(template.render(context),
-    #                         content_type="application/xhtml+xml")
     response = render_to_response("anfang/start-page.html", context_instance=context)
-    # pw_hash = u.password.split('$', 3)[3]
-    # key = AnfangPasswordHasher.removeKeyForPwHash(pw_hash)
-    # logging.error("looking up pw hash for key: %s" % (key))
-    # if key is not None:
-    #     response.set_signed_cookie("userkey", key, httponly=True)
-    #     key = None
     return response
 
 def logout(request):

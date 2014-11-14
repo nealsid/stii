@@ -1,0 +1,8 @@
+#status #id_text {
+    margin-bottom: 14px;
+    width: 100%;
+    height: 50px;
+    border-radius: 11px;
+    border-width: 2px;
+    border-style: dashed;
+}

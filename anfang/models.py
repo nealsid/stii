@@ -6,6 +6,7 @@ from Crypto.Cipher import AES
 from django.contrib.auth.models import User
 from django.db import models
 from django_fields.fields import EncryptedCharField, EncryptedDateTimeField
+from django.utils.translation import ugettext as _
 
 import base64
 import logging
@@ -36,13 +37,20 @@ class StatusUpdate(models.Model):
 
     relationship = models.ForeignKey(UserRelationship)
     posting_user = models.ForeignKey(User)
-    text = EncryptedCharField(block_type='MODE_CFB', max_length = 512, verbose_name = "New status")
+    text = EncryptedCharField(block_type='MODE_CFB',
+                              max_length = 512,
+                              verbose_name = "")
     picture = models.ImageField(null = True)
     time = EncryptedDateTimeField(block_type='MODE_CFB')
     encrypted = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "%(text)s by %(user)s" % {"text":self.text,"user":self.posting_user}
+
+    class Meta:
+        verbose_name = _('status update')
+        verbose_name_plural = _('status updates ')
+
 
 class UploadedPicture(models.Model):
     picture = models.ImageField()

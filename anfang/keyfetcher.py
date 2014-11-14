@@ -4,6 +4,8 @@ from .hashers import AnfangPasswordHasher
 
 import base64
 
+import logging
+
 class KeyFetcher():
     def keyForUser(user):
         pass
@@ -13,7 +15,6 @@ class KeyFetcher():
 
 class KeyFetcherForTestUsers(KeyFetcher):
     def keyForUser(self, user):
-        assert user.__class__ == User
         comps = user.password.split("$", 3)
         user_pw_hash = comps[3]
         if AnfangPasswordHasher._cache.has_key(user_pw_hash):
