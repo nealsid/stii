@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import user_passes_test, login_required
+from django.core.urlresolvers import reverse
 
 from anfang.keyfetcher import KeyFetcherForTestUsers
 
@@ -8,7 +9,7 @@ import logging
 
 key_fetcher = KeyFetcherForTestUsers()
 
-def user_login_and_key_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url=None):
+def user_login_and_key_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/anfang/logout'):
     """
     Decorator for views that checks that the user is logged in, redirecting
     to the log-in page if necessary.
