@@ -51,7 +51,6 @@ class StatusUpdate(models.Model):
         verbose_name = _('status update')
         verbose_name_plural = _('status updates ')
 
-
 class UploadedPicture(models.Model):
     picture = models.ImageField()
 

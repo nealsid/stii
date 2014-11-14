@@ -15,6 +15,8 @@ class KeyFetcher():
 
 class KeyFetcherForTestUsers(KeyFetcher):
     def keyForUser(self, user):
+        if not user.is_authenticated():
+            return None
         comps = user.password.split("$", 3)
         user_pw_hash = comps[3]
         if AnfangPasswordHasher._cache.has_key(user_pw_hash):
