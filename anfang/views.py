@@ -1,7 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.http import HttpResponse, HttpResponseRedirect
@@ -16,7 +15,7 @@ from models import UploadedPicture, UserProfile, UserRelationship, StatusUpdate
 import datetime
 import logging
 
-@login_required
+@user_login_and_key_required
 def new_status(request):
     if request.method == 'POST':
         form = StatusUpdateForm(request.POST)
@@ -31,7 +30,7 @@ def new_status(request):
             logging.error(form.errors)
     return HttpResponseRedirect(reverse('start'))
 
-@login_required
+@user_login_and_key_required
 def picture_save(request):
     if request.method == 'POST':
         form = ProfilePicForm(request.POST, request.FILES,
@@ -50,7 +49,7 @@ def picture_save(request):
             logging.warning("Invalid profile picture for " + str(request.user) + ".  " + str(form.errors))
             return HttpResponseRedirect('/anfang/start?err=invalid_image')
 
-@login_required
+@user_login_and_key_required
 def picture_edit(request):
     pid = request.GET['pid']
     pToEdit = UploadedPicture.objects.get(id=pid)
@@ -63,7 +62,7 @@ def picture_edit(request):
     return render_to_response("anfang/picture-edit.html",
                               context_instance=context)
 
-@login_required
+@user_login_and_key_required
 def picture_upload_for_editing(request):
     if request.method == "POST":
         form = UploadedPictureForm(request.POST, request.FILES)
@@ -118,7 +117,7 @@ def logout(request):
         auth.logout(request)
     return HttpResponseRedirect(reverse('account_login'))
 
-@login_required
+@user_login_and_key_required
 def mark_relationship(request):
     other_user_id = request.GET['with_id']
     dst_user = User.objects.get(id=other_user_id)
@@ -140,4 +139,4 @@ def mark_relationship(request):
     dst_user.userprofile.save()
     dst_user.save()
 
-    return HttpResponseRedirect("/anfang/start")
+    return HttpResponseRedirect(reverse("anfang:start"))
