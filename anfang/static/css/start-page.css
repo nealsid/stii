@@ -1,3 +1,31 @@
+ul {
+  padding: 0px;
+}
+
+.status-update-box img {
+  width: 20px;
+  float: left;
+  margin-right:10px;
+}
+
+#profile-picture {
+  border-width: 10px;
+}
+
+.status-update-box #status-timestamp {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 11px;
+}
+
+.status-update-box #delete-link {
+  position:absolute;
+  right:3px;
+  top:-5px;
+  visibility: hidden;
+}
+
 #status #id_text {
   margin-bottom: 14px;
   width: 100%;
@@ -9,7 +37,15 @@
   font-size: 25px;
 }
 
+.list-group-item {
+  transition-property: -webkit-filter;
+  transition-duration: 2s;
+  transition-timing-function: ease;
+  transition-delay: .1s;
+}
+
 #map {
+  width: 100%;
   transition-property: -webkit-filter;
   transition-duration: .5s;
   transition-timing-function: ease;

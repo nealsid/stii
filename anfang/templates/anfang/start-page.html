@@ -1,21 +1,38 @@
 {% extends "anfang/bootstrap-generic.html" %}
+
 {% block extraheader %}
 {% load staticfiles %}
 <link rel="stylesheet" href ={% static "css/start-page.css" %}>
+<script type="text/javascript" src={% static "js/dust-full.min.js" %}></script>
+<script type="text/javascript" src={% static "js/croptastic.js" %}></script>
 <script type="text/javascript" src={% static "js/start-page.js" %}></script>
+<script>
+ $(document).ready(function() {
+   makeDivFileDropZone(document.getElementById("profile-picture"),
+		       "Drop new profile picture here");
+ });
+</script>
 {% endblock %}
+
 {% block body %}
+
 {% if err %}
 <font color=red>{{ err }} </font><br>
 {% endif %}
+
 <div class="row">
   <div class="col-md-2 col-sm-2">
   </div>
   <div class="col-md-4 col-sm-4" align="center">
-    {% if other_user_profile.profile_picture %}
-    <img width="50%" class="img-responsive" src="{{ other_user_profile.profile_picture.picture.url }}">
-    {% endif %}
+    <div id="profile-picture">
+      {% if other_user_profile.profile_picture %}
+      <img width="50%" class="img-responsive" src="{{ other_user_profile.profile_picture.picture.url }}">
+      {% endif %}
+    </div>
+    <div id="pic-crop-widget">
+    </div>
   </div>
+
   <div class="col-md-4 col-sm-4" style="height: 800px;">
       <form action="{% url 'anfang:new_status' %}" method="post" id="new-status">
 	{% csrf_token %}
@@ -23,25 +40,29 @@
 	  {{ status_form }}
 	</div>
       </form>
-    <div class="media">
-      <ul class="list-group">
+
+      <ul id="status_update_ul">
 	{% for s in status_updates %}
-	<li class="list-group-item">
-	  <div class="pull-left media-object">
-	    <img width="50%" class="img-responsive" src={{ s.posting_user.userprofile.profile_picture.picture.url }}>
-	  </div>
-	  <div class ="media-body">
-	    <p class="media-heading" style="word-wrap:break-word;">
+	<li class="list-group-item" onmouseover="showDeleteLink(this);" onmouseout="hideDeleteLink(this);" id="{{ s.id }}">
+	  <div class="status-update-box">
+	    <img width="20px" height="20px" class="img-responsive" src={{ s.posting_user.userprofile.profile_picture.picture.url }}>
+	    <p style="word-wrap:break-word;">
 	      {{ s.text }}
-	      <small class="pull-right">{{ s.time }}</small>
 	    </p>
+	    <div id="status-timestamp">{{ s.time }}</div>
+	    <div id="delete-link">
+	      <h6>
+		<a href="#" onclick='issueDeleteStatusRequest("{% url 'anfang:delete_status' %}", {{ s.id }});'>
+		  Delete
+		</a>
+	      </h6>
+	    </div>
 	  </div>
 	</li>
 	{% endfor %}
       </ul>
-    </div>
-    <div id="map" style="height: 500px; width=100%;-webkit-filter: blur(10px)" >
-    </div>
+      <div id="map" style="height: 500px; width=100%;-webkit-filter: blur(10px)">
+      </div>
   </div>
   <div class="col-md-2 col-sm-2">
     <div class="media">
