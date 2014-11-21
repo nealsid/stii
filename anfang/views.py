@@ -14,6 +14,49 @@ from models import UploadedPicture, UserProfile, UserRelationship, StatusUpdate
 
 import datetime
 import logging
+import time
+import json
+
+def format_time_like_we_want_to(d):
+    right_now = datetime.datetime.now()
+    today_at_midnight = datetime.datetime.now().replace(hour=0,minute=0,second=0, microsecond=0)
+    yesterday_at_midnight = today_at_midnight - datetime.timedelta(days=1)
+
+    date_without_hms = d.replace(hour=0,minute=0,second=0, microsecond=0)
+    if today_at_midnight == date_without_hms:
+        return "Earlier today"
+    elif yesterday_at_midnight == date_without_hms:
+        return "Yesterday"
+    else:
+        return d.strftime("%h %d, %I:%M:%S")
+
+@user_login_and_key_required
+def get_status_updates_for_user(request):
+    u = request.user
+    primary_rel = u.userprofile.primary_relationship
+    status_updates = [x for x in StatusUpdate.objects.filter(relationship=primary_rel).order_by('time') if not x.encrypted]
+    status_updates_python = []
+    for s in status_updates:
+        status_updates_python.append({
+            'time':format_time_like_we_want_to(s.time),
+            'text':s.text,
+            'id':s.id,
+            'url':s.posting_user.userprofile.profile_picture.picture.url
+        })
+    return HttpResponse(json.dumps(status_updates_python))
+
+@user_login_and_key_required
+def delete_status(request):
+    u = request.user
+    s_id = request.GET['sid']
+    to_delete = StatusUpdate.objects.filter(posting_user=u,
+                                            id=s_id)
+    if len(to_delete) == 1:
+        to_delete.delete()
+        time.sleep(.25)
+        return HttpResponse("OK")
+    else:
+        return HttpResponse("NOT_FOUND")
 
 @user_login_and_key_required
 def new_status(request):
@@ -86,14 +129,12 @@ def start(request):
         other_user = User.objects.filter(userprofile__primary_relationship=primary_rel).exclude(id=u.id)[0]
         other_user_profile = other_user.userprofile
         potential_users = None
-        status_updates = [x for x in StatusUpdate.objects.filter(relationship=primary_rel).order_by('-time') if not x.encrypted]
         user = u
     else:
         other_user = None
         potential_users = User.objects.filter(userprofile = None).exclude(id = u.id)
         other_user_profile = None
         current_user_profile = None
-        status_updates = None
         user = u
 
     context = RequestContext(request, {
@@ -103,7 +144,6 @@ def start(request):
         'picform':picform,
         'status_form':status_form,
         'current_user_profile': current_user_profile,
-        'status_updates':status_updates,
         'user':u
     })
 

@@ -46,6 +46,7 @@ function Croptasticr(parentNode, previewNode) {
 }
 
 Croptasticr.prototype.setup = function (pic_url) {
+  this.parentNode.innerHTML = "";
   this.paper = Raphael(this.parentNode);
   var boundingRect = this.parentNode.getBoundingClientRect();
   this.xoffset = boundingRect.left + window.scrollX;

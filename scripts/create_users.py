@@ -69,11 +69,14 @@ NUM_STATUS_UPDATES_PER_USER = 3
 with open('status-updates.txt') as fp:
     statii = fp.readlines()
 
+timedeltas = [0,1,7,14]
 statii = [x.strip() for x in statii]
 for u in users:
+    i = 0
     for status in statii:
         s = StatusUpdate(relationship = u.userprofile.primary_relationship,
                          posting_user = u,
                          text = status,
-                         time = datetime.datetime.now(tz=pytz.utc))
+                         time = datetime.datetime.now(tz=pytz.utc) - datetime.timedelta(days=timedeltas[i]))
         s.save()
+        i = (i + 1) % len(timedeltas)
