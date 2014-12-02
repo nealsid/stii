@@ -10,7 +10,10 @@ urlpatterns = patterns(
     url(r'^status-update$', views.new_status, name="new_status"),
     url(r'^fetch-status-updates$', views.get_status_updates_for_user, name="get_status_updates"),
     url(r'^delete-status$', views.delete_status, name="delete_status"),
+
     url(r'^upload$', views.picture_upload_for_editing, name="picture_upload"),
     url(r'^edit$', views.picture_edit),
+
+    url(r'^profile_picture_upload$', views.profile_picture_upload, name='profile_picture_upload'),
     url(r'^logout$', views.logout, name="logout_no_confirm"),
 )

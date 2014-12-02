@@ -9,14 +9,14 @@ import logging
 
 key_fetcher = KeyFetcherForTestUsers()
 
-def user_login_and_key_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/anfang/logout'):
+def user_login_and_key_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, logout_url='/anfang/logout'):
     """
     Decorator for views that checks that the user is logged in, redirecting
     to the log-in page if necessary.
     """
     actual_decorator = user_passes_test(
         lambda u: u.is_authenticated and key_fetcher.keyForUser(u) != None,
-        login_url=login_url,
+        login_url=logout_url,
         redirect_field_name=redirect_field_name
     )
     if function:

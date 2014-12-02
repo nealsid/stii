@@ -7,6 +7,76 @@ if (!Date.now) {
   Date.now = function() { return new Date().getTime(); };
 }
 
+$(document).ready(function() {
+  var mapOptions = {
+    center: { lat:  40.7929616, lng: -73.96727329999999},
+    zoom: 16
+  };
+  getStatusUpdates();
+  map = new google.maps.Map(document.getElementById('map'),
+                            mapOptions);
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+      $("#map").css("-webkit-filter", "blur(0px)");
+      map.panTo({lat:lat,lng:lng});
+      service = new google.maps.places.PlacesService(map);
+    });
+
+  $('#id_text').keyup(function(e){
+    if (e.keyCode == 32) {
+      // Grab last two words.
+      var text = $("#id_text").val();
+      var query_words = text.split(" ");
+      clearGoogleSearchResults();
+      for (var i = 0; i < query_words.length; i++) {
+        var query = query_words[i];
+        if (query === "" || query_to_results[query] !== undefined) {
+          console.log("skipping " + query);
+          continue;
+        }
+        issuePlacesSearchAndUpdateUI(query);
+      }
+    }
+  });
+  makeDivFileDropZone(document.getElementById("profile-picture"),
+                      "Drop new profile picture here");
+  $("#pic-crop-widget-container").dialog({
+    modal: true,
+    autoOpen: false,
+    buttons: {
+      "Use this picture": function() {
+        commitCrop();
+        $( this ).dialog( "close" );
+      },
+      Cancel: function() {
+        cancelCrop();
+        $( this ).dialog( "close" );
+      }
+    },
+    title: "Crop this shit",
+    position: {
+      my: "left top",
+      at: "left top",
+      of: "#new-status"
+    }
+  });
+});
+
+var csrftoken = $.cookie('csrftoken');
+function csrfSafeMethod(method) {
+  // these HTTP methods do not require CSRF protection
+  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+  beforeSend: function(xhr, settings) {
+    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+      xhr.setRequestHeader("X-CSRFToken", csrftoken);
+    }
+  }
+});
+
 function createMarker(place) {
   var placeLoc = place.geometry.location;
   var marker = new google.maps.Marker({
@@ -60,42 +130,6 @@ function addGoogleSearchResult(name, iconurl, address) {
 
 var query_to_results = {};
 
-$(document).ready(function() {
-  var mapOptions = {
-    center: { lat:  40.7929616, lng: -73.96727329999999},
-    zoom: 16
-  };
-  map = new google.maps.Map(document.getElementById('map'),
-			    mapOptions);
-  getStatusUpdates();
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      lat = pos.coords.latitude;
-      lng = pos.coords.longitude;
-      map.setZoom(16);
-      $("#map").css("-webkit-filter", "blur(0px)");
-      map.panTo({lat:lat,lng:lng});
-      service = new google.maps.places.PlacesService(map);
-    });
-
-  $('#id_text').keyup(function(e){
-    if (e.keyCode == 32) {
-      // Grab last two words.
-      var text = $("#id_text").val();
-      var query_words = text.split(" ");
-      clearGoogleSearchResults();
-      for (var i = 0; i < query_words.length; i++) {
-	var query = query_words[i];
-	if (query === "" || query_to_results[query] !== undefined) {
-	  console.log("skipping " + query);
-	  continue;
-	}
-	issuePlacesSearchAndUpdateUI(query);
-      }
-    }
-  });
-});
-
 function getStatusUpdates() {
   var container = document.getElementById("status_update_ul");
   if (container === null) {
@@ -112,11 +146,11 @@ function getStatusUpdates() {
       var compiled = dust.compile(data, "status");
       dust.loadSource(compiled);
       for (var i = 0; i < status_updates.length; i++) {
-	dust.render("status", status_updates[i], function(err, out) {
-	  if (err === null) {
-	    children += out;
-	  }
-	});
+        dust.render("status", status_updates[i], function(err, out) {
+          if (err === null) {
+            children += out;
+          }
+        });
       }
       container.innerHTML = children;
     });
@@ -158,57 +192,123 @@ function issuePlacesSearchAndUpdateUI(query) {
       console.log("rpc return ts: " + Date.now());
       clearGoogleSearchResults();
       if (status != google.maps.places.PlacesServiceStatus.OK) {
-	console.log("Status from neabySearch call: " + status);
-	return;
+        console.log("Status from neabySearch call: " + status);
+        return;
       }
       for (var i = 0; i < results.length; i++) {
-	addGoogleSearchResult(results[i].name, results[i].icon, results[i].vicinity);
-	console.log("adding result for " + query);
-	query_to_results[query].push({'name':results[i].name, 'icon_url':results[i].icon, 'addr':results[i].vicinity});
+        addGoogleSearchResult(results[i].name, results[i].icon, results[i].vicinity);
+        console.log("adding result for " + query);
+        query_to_results[query].push({'name':results[i].name, 'icon_url':results[i].icon, 'addr':results[i].vicinity});
       }
     }
   );
 }
 
-function makeDivFileDropZone(element, instructions) {
-  var body = document.getElementsByTagName("body")[0];
-  if (body === null) {
-    console.log("Error finding body element to attach drag events");
-    return;
+function aspectRatioForImage(url) {
+  var img = document.createElement("IMG");
+  img.src = url;
+  var img_width = img.naturalWidth;
+  var img_height = img.naturalHeight;
+  var aspect_ratio = img_height / img_width;
+  return aspect_ratio;
+}
+
+function commitCrop() {
+  var canvas = document.getElementById("profile-picture-crop-preview");
+  var data = canvas.toDataURL();
+  $.post("/anfang/profile_picture_upload", { data: data }, function(data) {
+    alert('uploaded!');
+  });
+
+}
+
+function cancelCrop() {
+  $("#profile-img").css("display","block");
+  $("#profile-picture-crop-preview").css("display","none");
+}
+
+function startPictureCroppingUI(picture_url) {
+  $("#profile-img").css("display","none");
+  $("#profile-picture-crop-preview").css("display","block");
+
+  // Make the picture crop modal dialog expand to the RHS of the
+  // browser.  Sadly we have to open the dialog so we can get the
+  // position in pixels.  We specify the position in terms of the
+  // query UI position API so we don't know it before jQuery positions
+  // it.
+  $("#pic-crop-widget-container").dialog("open");
+  var position =  $("#pic-crop-widget-container").offset();
+  var window_width = $(window).width();
+  var window_height = $(window).height();
+  var aspect_ratio = aspectRatioForImage(picture_url);
+
+  var dialog_width = window_width - position.left;
+  var dialog_height = aspect_ratio * dialog_width;
+
+  // If calculating the height based on the width causes the
+  // image to overflow vertically, specify the vertical height
+  // to not overflow, and then recalculate the width.
+  if (position.top + dialog_height > window_height) {
+    dialog_height = window_height - position.top;
+    dialog_width = dialog_height / aspect_ratio;
   }
 
-  // Get file data on drop
+  $("#pic-crop-widget-container").dialog("option", "width", dialog_width);
+  $("#pic-crop-widget-container").dialog("option", "height", dialog_height);
+  var c = new Croptasticr(document.getElementById("pic-crop-widget"),
+                          document.getElementById("profile-picture-crop-preview"));
+  c.setup(picture_url);
+}
+
+function undoDropZoneDragUI(element) {
+  $(element).css("border", "");
+  $(element).css("border-style", "");
+  $(element).css("border-radius", "");
+  $(element).children("img").css("opacity", "");
+  $("#dnd_instructions").remove();
+}
+
+function makeDivFileDropZone(element, instructions) {
+  var body = document.getElementsByTagName("body")[0];
+  // We have to stop this event from firing in order to receive the
+  // final drop event.
   element.addEventListener("dragover", function(e) {
     e.preventDefault();
   });
 
+  // Get file data on drop
   element.addEventListener('drop', function(e) {
     e.stopPropagation();
     e.preventDefault();
-    console.log("inside drop listener");
+    if (e.dataTransfer.files.length == 0) {
+      return;
+    }
     var files = e.dataTransfer.files; // Array of all files
-    for (var i=0, file; file=files[i]; i++) {
-      if (file.type.match(/image.*/)) {
-        var reader = new FileReader();
-        reader.onload = function(e2) { // finished reading file data.
-	  var c = new Croptasticr(document.getElementById("pic-crop-widget"), null);
-          c.setup(e2.target.result);
-        };
-        reader.readAsDataURL(file); // start reading the file data.
-      }
+    var file = files[0];
+    if (file.type.match(/image.*/)) {
+      var reader = new FileReader();
+      reader.onload = function(e2) { // finished reading file data.
+	startPictureCroppingUI(e2.target.result);
+      };
+      reader.readAsDataURL(file); // start reading the file data.
+      undoDropZoneDragUI(element);
+    } else {
+      // TODO (nealsid): handle this.
     }
   });
+
+  // The "dragenter" event fires for every child element, so when we
+  // process dragenter on children, we need to make sure that we only
+  // do some behavior once; namely, modifynig the drop zone to have a
+  // dotted border and adding the instructions.
   var modifiedDiv = false;
   document.addEventListener("mouseout", function(evt) {
     if (modifiedDiv) {
-      $(element).css("border", "");
-      $(element).css("border-style", "");
-      $(element).css("border-radius", "");
-      $(element).children("img").css("opacity", "");
-      $("#dnd_instructions").remove();
+      undoDropZoneDragUI(element);
       modifiedDiv = false;
     }
   });
+
   body.addEventListener("dragenter", function(evt) {
     if (!modifiedDiv) {
       $(element).css("border", "lightblue");
@@ -233,7 +333,6 @@ function makeDivFileDropZone(element, instructions) {
       // CSS to get vertical centering.
       element.appendChild(instructionsDiv);
       var instructionsHeight = $(instructionsDiv).outerHeight();
-      console.log("div height: " + instructionsHeight);
       $(instructionsDiv).remove();
       $(instructionsDiv).css("display","");
       $(instructionsDiv).css("height", instructionsHeight + "px");

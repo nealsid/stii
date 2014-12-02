@@ -5,64 +5,60 @@
 <link rel="stylesheet" href ={% static "css/start-page.css" %}>
 <script type="text/javascript" src={% static "js/dust-full.min.js" %}></script>
 <script type="text/javascript" src={% static "js/croptastic.js" %}></script>
+<script type="text/javascript" src={% static "js/jquery.cookie.js" %}></script>
 <script type="text/javascript" src={% static "js/start-page.js" %}></script>
-<script>
- $(document).ready(function() {
-   makeDivFileDropZone(document.getElementById("profile-picture"),
-		       "Drop new profile picture here");
- });
-</script>
 {% endblock %}
 
 {% block body %}
-
-{% if err %}
-<font color=red>{{ err }} </font><br>
-{% endif %}
 
 <div class="row">
   <div class="col-md-2 col-sm-2">
   </div>
   <div class="col-md-4 col-sm-4" align="center">
     <div id="profile-picture">
+      <canvas id="profile-picture-crop-preview" width=192 height=192>
+      </canvas>
       {% if other_user_profile.profile_picture %}
-      <img width="50%" class="img-responsive" src="{{ other_user_profile.profile_picture.picture.url }}">
+      <img width="50%" id="profile-img" class="img-responsive" src="{{ other_user_profile.profile_picture.picture.url }}">
       {% endif %}
-    </div>
-    <div id="pic-crop-widget">
     </div>
   </div>
 
-  <div class="col-md-4 col-sm-4" style="height: 800px;">
-      <form action="{% url 'anfang:new_status' %}" method="post" id="new-status">
-	{% csrf_token %}
-	<div id="status">
-	  {{ status_form }}
-	</div>
-      </form>
+  <div id="pic-crop-widget-container">
+    <div id="pic-crop-widget" style="height:100%;width:100%">
+    </div>
+  </div>
 
-      <ul id="status_update_ul">
-	{% for s in status_updates %}
-	<li class="list-group-item" onmouseover="showDeleteLink(this);" onmouseout="hideDeleteLink(this);" id="{{ s.id }}">
-	  <div class="status-update-box">
-	    <img width="20px" height="20px" class="img-responsive" src={{ s.posting_user.userprofile.profile_picture.picture.url }}>
-	    <p style="word-wrap:break-word;">
-	      {{ s.text }}
-	    </p>
-	    <div id="status-timestamp">{{ s.time }}</div>
-	    <div id="delete-link">
-	      <h6>
-		<a href="#" onclick='issueDeleteStatusRequest("{% url 'anfang:delete_status' %}", {{ s.id }});'>
-		  Delete
-		</a>
-	      </h6>
-	    </div>
-	  </div>
-	</li>
-	{% endfor %}
-      </ul>
-      <div id="map" style="height: 500px; width=100%;-webkit-filter: blur(10px)">
+  <div id="status-column" class="col-md-4 col-sm-4" style="height: 800px;">
+    <form action="{% url 'anfang:new_status' %}" method="post" id="new-status">
+      {% csrf_token %}
+      <div id="status">
+        {{ status_form }}
       </div>
+    </form>
+
+    <ul id="status_update_ul">
+      {% for s in status_updates %}
+      <li class="list-group-item" onmouseover="showDeleteLink(this);" onmouseout="hideDeleteLink(this);" id="{{ s.id }}">
+        <div class="status-update-box">
+          <img width="20px" height="20px" class="img-responsive" src={{ s.posting_user.userprofile.profile_picture.picture.url }}>
+          <p style="word-wrap:break-word;">
+            {{ s.text }}
+          </p>
+          <div id="status-timestamp">{{ s.time }}</div>
+          <div id="delete-link">
+            <h6>
+              <a href="#" onclick='issueDeleteStatusRequest("{% url 'anfang:delete_status' %}", {{ s.id }});'>
+                Delete
+              </a>
+            </h6>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    <div id="map" style="height: 500px; width=100%;-webkit-filter: blur(10px)">
+    </div>
   </div>
   <div class="col-md-2 col-sm-2">
     <div class="media">

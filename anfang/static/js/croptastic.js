@@ -33,6 +33,8 @@ function Croptasticr(parentNode, previewNode) {
 
   // Preview-related object references
   this.previewNode = previewNode;
+  this.previewWidth = null;
+  this.previewHeight = null;
   // This stores a corresponding IMG DOM object for the IMAGE one that
   // Raphael creates (the Raphael one is SVG-specific).
   this.imageForRaphaelSVGImage = null;
@@ -53,6 +55,8 @@ Croptasticr.prototype.setup = function (pic_url) {
   this.yoffset = boundingRect.top + window.scrollY;
   this.width = boundingRect.width;
   this.height = boundingRect.height;
+  console.log("width: " + this.width);
+  console.log("height: " + this.height);
   this.svgImage = this.paper.image(pic_url, 0, 0, this.width, this.height);
 
   this.viewportCenterX  = this.width / 2;
@@ -61,11 +65,12 @@ Croptasticr.prototype.setup = function (pic_url) {
   this.sideLengthY = 100;
   this.setupViewport();
   if (this.previewNode !== null) {
-    this.previewNode.height = this.paper.height;
-    this.previewNode.width = this.paper.width;
     this.imageForRaphaelSVGImage = document.createElement("IMG");
     this.imageForRaphaelSVGImage.src = this.svgImage.attr("src");
     this.drawingContext = this.previewNode.getContext("2d");
+    this.previewWidth = $("#profile-picture-crop-preview").width();
+    this.previewHeight = $("#profile-picture-crop-preview").height();
+    this.updatePreview();
   }
 };
 
@@ -77,21 +82,30 @@ Croptasticr.prototype.updatePreview = function () {
   // know if the image has actually been loaded yet in the setup
   // function.
   if (this.widthMultiplier === null) {
-    this.widthMultiplier = this.imageForRaphaelSVGImage.width / this.svgImage.attr("width");
+    this.widthMultiplier =
+      this.imageForRaphaelSVGImage.width / this.svgImage.attr("width");
   }
-
   if (this.heightMultiplier === null) {
-    this.heightMultiplier = this.imageForRaphaelSVGImage.height / this.svgImage.attr("height");
+    this.heightMultiplier =
+      this.imageForRaphaelSVGImage.height / this.svgImage.attr("height");
   }
-  this.drawingContext.clearRect(0, 0, 500, 500);
+  this.drawingContext.clearRect(0, 0, this.previewWidth, this.previewHeight);
   var image_coordinate_ul_x = (this.viewportCenterX - (this.sideLengthX / 2)) * this.widthMultiplier;
   var image_coordinate_ul_y = (this.viewportCenterY - (this.sideLengthY / 2)) * this.heightMultiplier;
+
+  // console.log("previewWidth : " + previewWidth );
+  // console.log("previewHeight: " + previewHeight);
+
+  // console.log("image_coordinate_ul_x: " + image_coordinate_ul_x);
+  // console.log("image_coordinate_ul_y: " + image_coordinate_ul_y);
+  // console.log("this.sideLengthX * this.widthMultiplier: " + (this.sideLengthX * this.widthMultiplier));
+  // console.log("this.sideLengthY * this.heightMultiplier: " + (this.sideLengthY * this.heightMultiplier));
   this.drawingContext.drawImage(this.imageForRaphaelSVGImage,
                                 image_coordinate_ul_x, // start x
                                 image_coordinate_ul_y, // start y
                                 this.sideLengthX * this.widthMultiplier, // width of source rect
                                 this.sideLengthY * this.heightMultiplier, // height of source rect
-                                0, 0, 500, 500); // destination rectangle
+                                0, 0, this.previewWidth, this.previewHeight); // destination rectangle
 };
 
 Croptasticr.prototype.pointsToSVGPolygonString = function (points) {
@@ -160,12 +174,40 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
   var croptasticr = this;
   /*jslint unparam: true*/
   lr_handle.drag(function (dx, dy, mouseX, mouseY, e) {
+    console.log("inside drag");
     var viewport_ul_x =
           croptasticr.viewportElement.matrix.x(croptasticr.viewportElement.attrs.path[0][1],
                                                croptasticr.viewportElement.attrs.path[0][2]);
     var viewport_ul_y =
           croptasticr.viewportElement.matrix.y(croptasticr.viewportElement.attrs.path[0][1],
                                                croptasticr.viewportElement.attrs.path[0][2]);
+    var viewport_lr_x = viewport_ul_x + croptasticr.sideLengthX;
+    var viewport_lr_y = viewport_ul_y + croptasticr.sideLengthY;
+    console.log("viewport_lr_x: " + viewport_lr_x);
+    console.log("viewport_lr_y: " + viewport_lr_y);
+    // Convert mouse coordinates from browser (which are in the
+    // browser window coordinates) to paper/picture coordinates,
+    // which is what Raphael expects.
+    var mouseX_local = mouseX - croptasticr.xoffset;
+    var mouseY_local = mouseY - croptasticr.yoffset;
+
+    var lr_handle_ul_x = croptasticr.lr_handle.matrix.x(croptasticr.lr_handle.attrs.path[0][1],
+							croptasticr.lr_handle.attrs.path[0][2]);
+    var lr_handle_ul_y = croptasticr.lr_handle.matrix.y(croptasticr.lr_handle.attrs.path[0][1],
+							croptasticr.lr_handle.attrs.path[0][2]);
+
+    console.log("lr_handle_ul_x: " + lr_handle_ul_x);
+    console.log("lr_handle_ul_y: " + lr_handle_ul_y);
+
+    console.log("mouseX_local: " + mouseX_local);
+    console.log("mouseY_local: " + mouseY_local);
+
+    var viewport_size_dx = 0;
+    var viewport_size_dy = 0;
+    viewport_size_dx = mouseX_local - viewport_lr_x;
+    viewport_size_dy = mouseY_local - viewport_lr_y;
+    console.log("viewport_size_dx: " + viewport_size_dx);
+    console.log("viewport_size_dy: " + viewport_size_dy);
     // dx/dy from Raphael are the changes in x/y from the drag start,
     // not the most recent change of the mouse.  Since we want to
     // track the mouse cursor as the user moves it, we need to figure
@@ -175,31 +217,35 @@ Croptasticr.prototype.drawResizeHandle = function (x, y) {
     // drag does, so we're counting on this code and the code inside
     // the viewport drag never being executed at the same time, as
     // they would clobber each other's state.
-    var newViewportX = mouseX - viewport_ul_x;
-    var newViewportY = mouseY - viewport_ul_y;
+    var newViewportX = viewport_lr_x + viewport_size_dx - viewport_ul_x;
+    var newViewportY = viewport_lr_y + viewport_size_dy - viewport_ul_y;
+
+    console.log("newviewportx: " + newViewportX);
+    console.log("newviewporty: " + newViewportY);
     if (newViewportX < croptasticr.viewportSizeThreshold &&
         newViewportY < croptasticr.viewportSizeThreshold) {
       return;
     }
+
     if (newViewportX < croptasticr.viewportSizeThreshold) {
       croptasticr.scaleViewport(croptasticr.viewportSizeThreshold, newViewportY);
       croptasticr.lasty = mouseY;
       croptasticr.positionLRResizeHandle();
     } else if (newViewportY < croptasticr.viewportSizeThreshold) {
       croptasticr.scaleViewport(newViewportX, croptasticr.viewportSizeThreshold);
-      croptasticr.lastx = mouseX;
+//      croptasticr.lastx = mouseX;
       croptasticr.positionLRResizeHandle();
     } else {
       croptasticr.scaleViewport(newViewportX, newViewportY);
-      croptasticr.lastx = mouseX;
-      croptasticr.lasty = mouseY;
+      // croptasticr.lastx = mouseX;
+      // croptasticr.lasty = mouseY;
       croptasticr.positionLRResizeHandle();
     }
     croptasticr.drawShadeElement();
     croptasticr.updatePreview();
   }, function (x, y, e) {
-    croptasticr.lastx = x;
-    croptasticr.lasty = y;
+    // croptasticr.lastx = x;
+    // croptasticr.lasty = y;
     croptasticr.setCursorsForResize();
   }, function (e) {
     croptasticr.setCursorsForResizeEnd();
@@ -226,6 +272,13 @@ Croptasticr.prototype.drawViewport = function () {
 
   this.viewportElement = this.paper.path(viewportSVG).attr("fill",
                                                            "transparent");
+  var viewport_lr_x =
+        croptasticr.viewportElement.matrix.x(croptasticr.viewportElement.attrs.path[2][1],
+                                             croptasticr.viewportElement.attrs.path[2][2]);
+  var viewport_lr_y =
+        croptasticr.viewportElement.matrix.y(croptasticr.viewportElement.attrs.path[2][1],
+                                             croptasticr.viewportElement.attrs.path[2][2]);
+
   // Draw resize handles.
   this.lr_handle = this.drawResizeHandle(innerPolyPoints[2].x - (this.handle_side_length / 2),
                                          innerPolyPoints[2].y - (this.handle_side_length / 2));
