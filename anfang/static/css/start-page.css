@@ -24,6 +24,26 @@ ul {
   margin-right:10px;
 }
 
+#left-nav-bar {
+    background-color: #ebffff;
+    height:100%;
+    width:100%;
+    border-radius: 5px;
+}
+
+.left-nav-icon:hover {
+    border-color: red;
+    opacity: 1;
+}
+
+.left-nav-icon {
+    margin: 20px;
+    border-radius: 5px;
+    border: solid;
+    border-color: lightgray;
+    opacity: .5;
+}
+
 #profile-picture-crop-preview {
   display:none;
   width: 168;

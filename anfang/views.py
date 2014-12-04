@@ -36,7 +36,7 @@ def format_time_like_we_want_to(d):
 def get_status_updates_for_user(request):
   u = request.user
   primary_rel = u.userprofile.primary_relationship
-  status_updates = [x for x in StatusUpdate.objects.filter(relationship=primary_rel).order_by('time') if not x.encrypted]
+  status_updates = [x for x in StatusUpdate.objects.filter(relationship=primary_rel).order_by('-time') if not x.encrypted]
   status_updates_python = []
   for s in status_updates:
     status_updates_python.append({
