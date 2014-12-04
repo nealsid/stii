@@ -1,3 +1,4 @@
+from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.contrib.auth.models import User
@@ -7,15 +8,16 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, render_to_response
 from django.template import RequestContext, loader
 
-from forms import ProfilePicForm, StatusUpdateForm, UploadedPictureForm
+from forms import ProfilePicForm, StatusUpdateForm
 from hashers import AnfangPasswordHasher
 from key_management import user_login_and_key_required
 from models import UploadedPicture, UserProfile, UserRelationship, StatusUpdate
 
 import datetime
 import logging
-import time
 import json
+import tempfile
+import time
 
 def format_time_like_we_want_to(d):
   right_now = datetime.datetime.now()
@@ -93,42 +95,22 @@ def picture_save(request):
       return HttpResponseRedirect('/anfang/start?err=invalid_image')
 
 @user_login_and_key_required
-def picture_edit(request):
-  pid = request.GET['pid']
-  pToEdit = UploadedPicture.objects.get(id=pid)
-  context = RequestContext(request, {
-    'pic_url' : pToEdit.picture.url,
-    'pic': pToEdit,
-    'img_height': pToEdit.picture.height,
-    'img_width': pToEdit.picture.width,
-  })
-  return render_to_response("anfang/picture-edit.html",
-                            context_instance=context)
-
-@user_login_and_key_required
 def profile_picture_upload(request):
   if request.method == "POST":
+    u = request.user
+    up = u.userprofile
     ppf = request.POST['data']
-    with open('/tmp/foo.png', 'wb+') as destination:
-      destination.write(ppf)
-
-@user_login_and_key_required
-def picture_upload_for_editing(request):
-  if request.method == "POST":
-    form = UploadedPictureForm(request.POST, request.FILES)
-    if form.is_valid():
-      pic = form.save()
-      return HttpResponseRedirect("/anfang/edit?pid=" + str(pic.id))
-
-def handle_uploaded_file(f):
-  with open('/tmp/foo.png', 'wb+') as destination:
-    for chunk in f.chunks():
-      destination.write(chunk)
+    img_data = ppf.decode("base64")
+    temp_image = tempfile.NamedTemporaryFile()
+    temp_image.write(img_data)
+    django_temp_image = File(temp_image)
+    up.profile_picture.picture.save(temp_image.name, django_temp_image)
+    up.save()
+    logging.error("temp file: " + temp_image.name)
 
 @user_login_and_key_required
 def start(request):
   u = request.user
-  picform = UploadedPictureForm()
   status_form = StatusUpdateForm()
   if hasattr(u, "userprofile"):
     primary_rel = u.userprofile.primary_relationship
@@ -148,7 +130,6 @@ def start(request):
     'primaryreluser':other_user,
     'other_user_profile':other_user_profile,
     'potential_users':potential_users,
-    'picform':picform,
     'status_form':status_form,
     'current_user_profile': current_user_profile,
     'user':u

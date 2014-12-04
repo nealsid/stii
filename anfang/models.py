@@ -27,7 +27,7 @@ class UserPicture(models.Model):
     owning_user_path = "user_profile"
 
     user_profile = models.ForeignKey(UserProfile)
-    picture = models.ImageField(help_text="Upload a profile picture here.")
+    picture = models.ImageField(help_text="Upload a picture here.")
 
 class UserRelationship(models.Model):
     title = models.CharField(max_length = 25)
@@ -50,9 +50,6 @@ class StatusUpdate(models.Model):
     class Meta:
         verbose_name = _('status update')
         verbose_name_plural = _('status updates ')
-
-class UploadedPicture(models.Model):
-    picture = models.ImageField()
 
 class Place(models.Model):
     name  = models.CharField(max_length = 50)

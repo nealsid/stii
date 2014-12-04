@@ -6,11 +6,6 @@ class ProfilePicForm(ModelForm):
         model = UserPicture
         fields = ['picture']
 
-class UploadedPictureForm(ModelForm):
-    class Meta:
-        model = UploadedPicture
-        fields = ['picture']
-
 class StatusUpdateForm(ModelForm):
     class Meta:
         model = StatusUpdate

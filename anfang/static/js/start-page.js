@@ -215,7 +215,8 @@ function aspectRatioForImage(url) {
 
 function commitCrop() {
   var canvas = document.getElementById("profile-picture-crop-preview");
-  var data = canvas.toDataURL();
+  var r = new RegExp("data:image/[a-z]{3};base64,");
+  var data = canvas.toDataURL().replace(r, "");
   $.post("/anfang/profile_picture_upload", { data: data }, function(data) {
     alert('uploaded!');
   });
