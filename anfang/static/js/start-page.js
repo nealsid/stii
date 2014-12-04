@@ -42,6 +42,24 @@ $(document).ready(function() {
   });
   makeDivFileDropZone(document.getElementById("profile-picture"),
                       "Drop new profile picture here");
+  $("#settings-dialog-container").dialog({
+    modal: true,
+    autoOpen: false,
+    width: "100%",
+    height: "auto",
+    buttons: {
+      Save: function() {
+        $( this ).dialog( "close" );
+      },
+      Cancel: function() {
+        $( this ).dialog( "close" );
+      }
+    },
+    title: "Options"
+  });
+  $("#settings-icon").on("click", function() {
+    settingsIconClicked();
+  });
   $("#pic-crop-widget-container").dialog({
     modal: true,
     autoOpen: false,
@@ -128,8 +146,6 @@ function addGoogleSearchResult(name, iconurl, address) {
   text.innerHTML += address;
 }
 
-var query_to_results = {};
-
 function getStatusUpdates() {
   var container = document.getElementById("status_update_ul");
   if (container === null) {
@@ -175,6 +191,24 @@ function issueDeleteStatusRequest(url, sid) {
     }
   });
 }
+
+function getUserSettings() {
+  return null;
+}
+
+function settingsIconClicked() {
+  $.get("/static/dust/settings-page.html", function(data) {
+    var compiled = dust.compile(data, "settings");
+    dust.loadSource(compiled);
+    dust.render("settings", getUserSettings(), function(err, out) {
+      if (err === null) {
+        document.getElementById("settings-dialog-container").innerHTML = out;
+        $("#settings-dialog-container").dialog("open");
+      }
+    });
+  });
+}
+var query_to_results = {};
 
 function issuePlacesSearchAndUpdateUI(query) {
   var x = {};

@@ -14,8 +14,8 @@
 <div class="row">
   <div class="col-md-2 col-sm-2" style="height:1000px" align=center>
     <div id="left-nav-bar">
-      <img src={% static "images/photos-icon.png" %} width=64 height=64 class="left-nav-icon">
-      <img src={% static "images/settings-icon.png" %} width=64 height=64 class="left-nav-icon">
+      <img src={% static "images/photos-icon.png" %} id="photos-icon" width=64 height=64 class="left-nav-icon">
+      <img src={% static "images/settings-icon.png" %} id="settings-icon" width=64 height=64 class="left-nav-icon">
     </div>
   </div>
   <div class="col-md-4 col-sm-4" align="center">
@@ -26,6 +26,9 @@
       <img width="50%" id="profile-img" class="img-responsive" src="{{ other_user_profile.profile_picture.picture.url }}">
       {% endif %}
     </div>
+  </div>
+
+  <div id="settings-dialog-container">
   </div>
 
   <div id="pic-crop-widget-container">
