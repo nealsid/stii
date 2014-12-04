@@ -11,7 +11,7 @@ from django.template import RequestContext, loader
 from forms import ProfilePicForm, StatusUpdateForm
 from hashers import AnfangPasswordHasher
 from key_management import user_login_and_key_required
-from models import UploadedPicture, UserProfile, UserRelationship, StatusUpdate
+from models import UserProfile, UserRelationship, StatusUpdate
 
 import datetime
 import logging
@@ -45,7 +45,7 @@ def get_status_updates_for_user(request):
       'id':s.id,
       'url':s.posting_user.userprofile.profile_picture.picture.url
     })
-    return HttpResponse(json.dumps(status_updates_python))
+  return HttpResponse(json.dumps(status_updates_python))
 
 @user_login_and_key_required
 def delete_status(request):
@@ -73,7 +73,7 @@ def new_status(request):
       status_update.save()
     else:
       logging.error(form.errors)
-      return HttpResponseRedirect(reverse('start'))
+  return HttpResponseRedirect(reverse('start'))
 
 @user_login_and_key_required
 def picture_save(request):

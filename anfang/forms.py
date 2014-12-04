@@ -1,5 +1,5 @@
 from django.forms import ModelForm, TextInput
-from models import UserProfile, UserPicture, StatusUpdate, UploadedPicture
+from models import UserProfile, UserPicture, StatusUpdate
 
 class ProfilePicForm(ModelForm):
     class Meta:
