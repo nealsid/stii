@@ -8,10 +8,11 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, render_to_response
 from django.template import RequestContext, loader
 
-from forms import ProfilePicForm, StatusUpdateForm
-from hashers import AnfangPasswordHasher
-from key_management import user_login_and_key_required
-from models import UserProfile, UserRelationship, StatusUpdate
+from .forms import ProfilePicForm, StatusUpdateForm
+from .hashers import AnfangPasswordHasher
+from .key_management import user_login_and_key_required
+from .models import UserProfile, UserRelationship, StatusUpdate
+from .settings_dict import Settings
 
 import datetime
 import logging
@@ -124,12 +125,14 @@ def start(request):
     other_user_profile = other_user.userprofile
     potential_users = None
     user = u
+    settings_dict = Settings.fromUserProfile(current_user_profile).asJSON()
   else:
     other_user = None
     potential_users = User.objects.filter(userprofile = None).exclude(id = u.id)
     other_user_profile = None
     current_user_profile = None
     user = u
+    settings_dict = None
 
   context = RequestContext(request, {
     'primaryreluser':other_user,
@@ -137,7 +140,8 @@ def start(request):
     'potential_users':potential_users,
     'status_form':status_form,
     'current_user_profile': current_user_profile,
-    'user':u
+    'user':u,
+    'settings_dict':settings_dict
   })
 
   if request.GET.has_key('err') and request.GET['err'] == 'invalid_image':

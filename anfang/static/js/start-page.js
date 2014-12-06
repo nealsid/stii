@@ -1,47 +1,43 @@
+/* global $, google, dust */
+
 var lat = null;
 var lng = null;
 var map = null;
 var service = null;
 
-if (!Date.now) {
-  Date.now = function() { return new Date().getTime(); };
-}
+function preDocumentLoadSetup() {
+  if (!Date.now) {
+    Date.now = function() { return new Date().getTime(); };
+  }
+  // Initialize jQuery to all http requests contain the CSRF token
+  // required by Django.
+  var csrftoken = $.cookie('csrftoken');
+  function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+  }
 
-$(document).ready(function() {
-  var mapOptions = {
-    center: { lat:  40.7929616, lng: -73.96727329999999},
-    zoom: 16
-  };
-  getStatusUpdates();
-  map = new google.maps.Map(document.getElementById('map'),
-                            mapOptions);
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      lat = pos.coords.latitude;
-      lng = pos.coords.longitude;
-      $("#map").css("-webkit-filter", "blur(0px)");
-      map.panTo({lat:lat,lng:lng});
-      service = new google.maps.places.PlacesService(map);
-    });
-
-  $('#id_text').keyup(function(e){
-    if (e.keyCode == 32) {
-      // Grab last two words.
-      var text = $("#id_text").val();
-      var query_words = text.split(" ");
-      clearGoogleSearchResults();
-      for (var i = 0; i < query_words.length; i++) {
-        var query = query_words[i];
-        if (query === "" || query_to_results[query] !== undefined) {
-          console.log("skipping " + query);
-          continue;
-        }
-        issuePlacesSearchAndUpdateUI(query);
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
       }
     }
   });
+}
+
+preDocumentLoadSetup();
+
+$(document).ready(function() {
+  postDocumentLoadSetup();
+});
+
+function postDocumentLoadSetup() {
+  initializeGoogleMaps();
+  getStatusUpdates();
   makeDivFileDropZone(document.getElementById("profile-picture"),
                       "Drop new profile picture here");
+
   $("#settings-dialog-container").dialog({
     modal: true,
     autoOpen: false,
@@ -61,6 +57,7 @@ $(document).ready(function() {
   $("#settings-icon").on("click", function() {
     settingsIconClicked();
   });
+
   $("#pic-crop-widget-container").dialog({
     modal: true,
     autoOpen: false,
@@ -81,33 +78,37 @@ $(document).ready(function() {
       of: "#new-status"
     }
   });
-});
-
-var csrftoken = $.cookie('csrftoken');
-function csrfSafeMethod(method) {
-  // these HTTP methods do not require CSRF protection
-  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
-$.ajaxSetup({
-  beforeSend: function(xhr, settings) {
-    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-      xhr.setRequestHeader("X-CSRFToken", csrftoken);
-    }
-  }
-});
 
-function createMarker(place) {
-  var placeLoc = place.geometry.location;
-  var marker = new google.maps.Marker({
-    map: map,
-    position: place.geometry.location
+function initializeGoogleMaps() {
+  var mapOptions = {
+    center: { lat:  40.7929616, lng: -73.96727329999999},
+    zoom: 16
+  };
+  map = new google.maps.Map(document.getElementById('map'),
+                            mapOptions);
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+    $("#map").css("-webkit-filter", "blur(0px)");
+    map.panTo({lat:lat,lng:lng});
+    service = new google.maps.places.PlacesService(map);
   });
-
-  infowindow = new google.maps.InfoWindow();
-  infowindow.setContent(place.name);
-  google.maps.event.addListener(marker, 'click', function() {
-    infowindow.setContent(place.name);
-    infowindow.open(map, this);
+  $('#id_text').keyup(function(e){
+    if (e.keyCode == 32) {
+      // Grab last two words.
+      var text = $("#id_text").val();
+      var query_words = text.split(" ");
+      clearGoogleSearchResults();
+      for (var i = 0; i < query_words.length; i++) {
+        var query = query_words[i];
+        if (query === "" || query_to_results[query] !== undefined) {
+          console.log("skipping " + query);
+          continue;
+        }
+        issuePlacesSearchAndUpdateUI(query);
+      }
+    }
   });
 }
 
@@ -149,30 +150,47 @@ function addGoogleSearchResult(name, iconurl, address) {
 }
 
 function getStatusUpdates() {
+  var template_fetch_done = false;
+  var status_update_fetch_done = false;
+
+  var status_updates = [];
+
+  // TODO (nealsid): change this to use Django's reverse URL lookup
+  // mechanism somehow for the URLs here (template variable in the DOM,
+  // maybe?)
+  $.get("/static/dust/status-update.html", function(data) {
+    var compiled = dust.compile(data, "status");
+    dust.loadSource(compiled);
+    template_fetch_done = true;
+    if (status_update_fetch_done) {
+      renderStatusUpdates(status_updates);
+    }
+  });
+
+  $.get("/anfang/fetch-status-updates", function(data) {
+    status_updates = $.parseJSON(data);
+    status_update_fetch_done = true;
+    if (template_fetch_done) {
+      renderStatusUpdates(status_updates);
+    }
+  });
+}
+
+function renderStatusUpdates(status_updates) {
   var container = document.getElementById("status_update_ul");
   if (container === null) {
     return;
   }
-  container.innerHTML = "";
-  // TODO (nealsid): change this to use Django's reverse URL lookup
-  // mechanism somehow for the URL here (template variable in the DOM,
-  // maybe?)
   var children = "";
-  $.get("/anfang/fetch-status-updates", function(data) {
-    var status_updates = $.parseJSON(data);
-    $.get("/static/dust/status-update.html", function(data) {
-      var compiled = dust.compile(data, "status");
-      dust.loadSource(compiled);
-      for (var i = 0; i < status_updates.length; i++) {
-        dust.render("status", status_updates[i], function(err, out) {
-          if (err === null) {
-            children += out;
-          }
-        });
+  container.innerHTML = "";
+  for (var i = 0; i < status_updates.length; i++) {
+    dust.render("status", status_updates[i], function(err, out) {
+      if (err === null) {
+        children += out;
       }
-      container.innerHTML = children;
     });
-  });
+  }
+  container.innerHTML = children;
 }
 
 function showDeleteLink(element) {

@@ -8,11 +8,11 @@
 <script type="text/javascript" src={% static "js/jquery.cookie.js" %}></script>
 <script type="text/javascript" src={% static "js/settings.js" %}></script>
 <script type="text/javascript" src={% static "js/start-page.js" %}></script>
+<script>
+  var userOptions = {{ settings_dict|safe }};
+</script>
 {% endblock %}
 
-<script>
-  var userOptions = {{ options }};
-</script>
 {% block body %}
 
 <div class="row">
