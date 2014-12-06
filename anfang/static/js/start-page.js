@@ -150,30 +150,21 @@ function addGoogleSearchResult(name, iconurl, address) {
 }
 
 function getStatusUpdates() {
-  var template_fetch_done = false;
-  var status_update_fetch_done = false;
-
   var status_updates = [];
 
   // TODO (nealsid): change this to use Django's reverse URL lookup
   // mechanism somehow for the URLs here (template variable in the DOM,
   // maybe?)
-  $.get("/static/dust/status-update.html", function(data) {
-    var compiled = dust.compile(data, "status");
-    dust.loadSource(compiled);
-    template_fetch_done = true;
-    if (status_update_fetch_done) {
+  $.when(
+    $.get("/static/dust/status-update.html", function(data) {
+      var compiled = dust.compile(data, "status");
+      dust.loadSource(compiled);
+    }),
+    $.get("/anfang/fetch-status-updates", function(data) {
+      status_updates = $.parseJSON(data);
+    })).then(function () {
       renderStatusUpdates(status_updates);
-    }
-  });
-
-  $.get("/anfang/fetch-status-updates", function(data) {
-    status_updates = $.parseJSON(data);
-    status_update_fetch_done = true;
-    if (template_fetch_done) {
-      renderStatusUpdates(status_updates);
-    }
-  });
+    });
 }
 
 function renderStatusUpdates(status_updates) {
