@@ -1,0 +1,66 @@
+/* #### checkbox buttons #### */
+/* stolen from: http://www.dynamicdrive.com/style/csslibrary/item/css3_checkbox_and_radio_button_replacements/ */
+
+input[type="checkbox"].css3checkbox{
+  display: none;
+}
+
+label.toggler{ /* checkbox label */
+  display: block;
+  position: relative;
+  padding-left: 32px; /* space to the left of label text */
+  padding-top: 2px;
+  margin-bottom: 1em; /* bottom spacing */
+  cursor: pointer;
+  -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+  -moz-user-select: none; /* mozilla browsers */
+  -khtml-user-select: none; /* webkit (konqueror) browsers */
+  -ms-user-select: none; /* IE10+ */
+}
+
+label.toggler::before{ /* flat box */
+  content: '';
+  display: block;
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  background: #FFFFFF;
+  box-shadow: 0 0 3px #BFDEFC inset;
+  left: 0;
+  top: 0;
+}
+
+label.toggler::after{ /* check mark inside flat box*/
+  content: '\f00c'; /* fontAwesome icon font unicode. See http://fortawesome.github.io/Font-Awesome/cheatsheet/ for others */
+  position:absolute;
+  left: -15px;
+  top: -17px;
+  font: bold 64px FontAwesome;
+  color: #00EE00;
+  width: 0; /* hide check mark initially */
+  text-shadow: 0 0 2px #000000;
+  overflow: hidden;
+}
+
+/* NB(nealsid): This is sort of a hack - I apply the CSS rule to the
+   checkbox, and assume the next rule for checked checkboxes will take
+   precedence if the chebkox is checked.  I only want to animate the
+   width to 0 if the checkbox is being unchecked, though, but there's
+   no pseudo-class for unchecked checkboxes.
+   Also, this animation is simple so I kept it as a CSS transition, but
+   for more complicated animations I'd switch to transition3d to avoid
+   having the browser relayout at every step along the transition.
+*/
+input[type="checkbox"] + label.toggler::after{ /* check mark for checkboxes */
+  transition: width .1s ease-out; /* CSS3 transition on width property */
+  width: 0px; /* decrease width check mark to hide label containing check mark. */
+}
+
+input[type="checkbox"]:checked + label.toggler::after{ /* check mark when checkbox is checked */
+  transition: width .1s ease-out; /* CSS3 transition on width property */
+  width: 64px; /* expand check mark to show it. Value should reflect that of container box */
+}
+
+.settings-row {
+    padding: 12px;
+}

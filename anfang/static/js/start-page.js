@@ -46,17 +46,18 @@ $(document).ready(function() {
     modal: true,
     autoOpen: false,
     width: "100%",
-    height: "auto",
     buttons: {
       Save: function() {
-        $( this ).dialog( "close" );
+        saveSettings();
+        $(this).dialog( "close" );
       },
       Cancel: function() {
-        $( this ).dialog( "close" );
+        $(this).dialog( "close" );
       }
     },
     title: "Options"
   });
+
   $("#settings-icon").on("click", function() {
     settingsIconClicked();
   });
@@ -66,11 +67,11 @@ $(document).ready(function() {
     buttons: {
       "Use this picture": function() {
         commitCrop();
-        $( this ).dialog( "close" );
+        $(this).dialog( "close" );
       },
       Cancel: function() {
         cancelCrop();
-        $( this ).dialog( "close" );
+        $(this).dialog( "close" );
       }
     },
     title: "Crop this shit",
@@ -126,6 +127,7 @@ function clearGoogleSearchResults() {
     parent.removeChild(parent.firstChild);
   }
 }
+
 function addGoogleSearchResult(name, iconurl, address) {
   var parent = document.getElementById("google-search-results");
   var icon = document.createElement("img");
@@ -192,22 +194,6 @@ function issueDeleteStatusRequest(url, sid) {
   });
 }
 
-function getUserSettings() {
-  return null;
-}
-
-function settingsIconClicked() {
-  $.get("/static/dust/settings-page.html", function(data) {
-    var compiled = dust.compile(data, "settings");
-    dust.loadSource(compiled);
-    dust.render("settings", getUserSettings(), function(err, out) {
-      if (err === null) {
-        document.getElementById("settings-dialog-container").innerHTML = out;
-        $("#settings-dialog-container").dialog("open");
-      }
-    });
-  });
-}
 var query_to_results = {};
 
 function issuePlacesSearchAndUpdateUI(query) {

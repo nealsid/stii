@@ -48,6 +48,11 @@ def get_status_updates_for_user(request):
   return HttpResponse(json.dumps(status_updates_python))
 
 @user_login_and_key_required
+def save_settings(request):
+  u = request.user
+
+
+@user_login_and_key_required
 def delete_status(request):
   u = request.user
   s_id = request.GET['sid']

@@ -18,6 +18,11 @@ class UserProfile(models.Model):
     profile_picture = models.OneToOneField('UserPicture', null=True)
     primary_relationship = models.ForeignKey('UserRelationship', null=True)
     relationships = models.ManyToManyField('UserRelationship', related_name="secondary")
+    delete_older_than = models.IntegerField(null=True, blank=True,
+                                            choices=[(1, _("1 day")),
+                                                     (2, _("2 days")),
+                                                     (7, _("1 week")),
+                                                     (30, _("About a month"))])
 
     def __unicode__(self):
         return ("%(email)s in a relationship with id: %(id)d"
