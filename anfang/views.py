@@ -51,7 +51,12 @@ def get_status_updates_for_user(request):
 @user_login_and_key_required
 def save_settings(request):
   u = request.user
-
+  new_settings_json_string = request.GET['options_dictionary_json']
+  new_settings = Settings.fromJSON(new_settings_json_string)
+  user_profile = u.userprofile
+  new_settings.updateUserProfile(user_profile)
+  user_profile.save()
+  return HttpResponse("OK");
 
 @user_login_and_key_required
 def delete_status(request):
@@ -61,7 +66,6 @@ def delete_status(request):
                                           id=s_id)
   if len(to_delete) == 1:
     to_delete.delete()
-    time.sleep(.25)
     return HttpResponse("OK")
   else:
     return HttpResponse("NOT_FOUND")

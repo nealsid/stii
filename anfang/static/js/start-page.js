@@ -38,25 +38,7 @@ function postDocumentLoadSetup() {
   makeDivFileDropZone(document.getElementById("profile-picture"),
                       "Drop new profile picture here");
 
-  $("#settings-dialog-container").dialog({
-    modal: true,
-    autoOpen: false,
-    width: "100%",
-    buttons: {
-      Save: function() {
-        saveSettings();
-        $(this).dialog( "close" );
-      },
-      Cancel: function() {
-        $(this).dialog( "close" );
-      }
-    },
-    title: "Options"
-  });
-
-  $("#settings-icon").on("click", function() {
-    settingsIconClicked();
-  });
+  initializeSettings();
 
   $("#pic-crop-widget-container").dialog({
     modal: true,

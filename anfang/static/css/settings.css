@@ -26,6 +26,8 @@ label.toggler::before{ /* flat box */
   height: 25px;
   background: #FFFFFF;
   box-shadow: 0 0 3px #BFDEFC inset;
+  border: solid;
+  border-width: 2px;
   left: 0;
   top: 0;
 }
@@ -51,7 +53,7 @@ label.toggler::after{ /* check mark inside flat box*/
    for more complicated animations I'd switch to transition3d to avoid
    having the browser relayout at every step along the transition.
 */
-input[type="checkbox"] + label.toggler::after{ /* check mark for checkboxes */
+input[type="checkbox"] + label.toggler::after { /* check mark for checkboxes */
   transition: width .1s linear; /* CSS3 transition on width property */
   width: 0px; /* decrease width check mark to hide label containing check mark. */
 }
@@ -63,4 +65,9 @@ input[type="checkbox"]:checked + label.toggler::after{ /* check mark when checkb
 
 .settings-row {
     padding: 12px;
+}
+
+.settings-description {
+    font-family: 'Indie Flower', cursive;
+    font-size: 24px;
 }
