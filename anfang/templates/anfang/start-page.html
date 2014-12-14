@@ -9,6 +9,7 @@
 <script type="text/javascript" src={% static "js/jquery.cookie.js" %}></script>
 <script type="text/javascript" src={% static "js/settings.js" %}></script>
 <script type="text/javascript" src={% static "js/start-page.js" %}></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/3.18.1/build/yui/yui-min.js"></script>
 <script>
   var userOptions = {{ settings_dict|safe }};
 </script>
@@ -41,11 +42,12 @@
     </div>
   </div>
 
-  <div id="status-column" class="col-md-4 col-sm-4" style="height: 800px;">
+  <div id="status-column" class="col-md-3 col-sm-3" style="height: 800px;">
     <form action="{% url 'anfang:new_status' %}" method="post" id="new-status">
       {% csrf_token %}
       <div id="status">
-        {{ status_form }}
+        <div id="id_text">
+        </div>
       </div>
     </form>
 
@@ -72,7 +74,7 @@
     <div id="map" style="height: 500px; width=100%;-webkit-filter: blur(10px)">
     </div>
   </div>
-  <div class="col-md-2 col-sm-2">
+  <div class="col-md-3 col-sm-3">
     <div class="media">
       <div id="google-search-results">
       </div>

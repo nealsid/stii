@@ -4,6 +4,8 @@ var lat = null;
 var lng = null;
 var map = null;
 var service = null;
+var google_search_result_parent_element = null;
+var editor = null;
 
 function preDocumentLoadSetup() {
   if (!Date.now) {
@@ -40,6 +42,11 @@ function postDocumentLoadSetup() {
 
   initializeSettings();
 
+  // Store google_search_result_parent_element because it's the same
+  // for the lifetime of the app.
+  google_search_result_parent_element =
+    document.getElementById("google-search-results");
+
   $("#pic-crop-widget-container").dialog({
     modal: true,
     autoOpen: false,
@@ -60,6 +67,27 @@ function postDocumentLoadSetup() {
       of: "#new-status"
     }
   });
+  YUI().use('editor-inline', function(Y) {
+
+    editor = new Y.InlineEditor({
+    });
+
+    //Focusing the Editor when the frame is ready..
+    editor.on('frame:ready', function() {
+      this.focus();
+    });
+
+    //Rendering the Editor.
+    editor.render('#status #id_text');
+    $('#id_text').keyup(function(e) {
+      if (e.ctrlKey && e.keyCode == 82) {
+        var last_word = find_last_word($(this).text())['value'];
+        console.log("extracted " + last_word + " as search query");
+        clearGoogleSearchResults();
+        issuePlacesSearchAndUpdateUI(last_word);
+      }
+    });
+  });
 }
 
 function initializeGoogleMaps() {
@@ -69,29 +97,24 @@ function initializeGoogleMaps() {
   };
   map = new google.maps.Map(document.getElementById('map'),
                             mapOptions);
+  console.log("initializing google maps");
   navigator.geolocation.getCurrentPosition(function(pos) {
     lat = pos.coords.latitude;
     lng = pos.coords.longitude;
     $("#map").css("-webkit-filter", "blur(0px)");
-    map.panTo({lat:lat,lng:lng});
+    map.panTo({
+      lat:lat,
+      lng:lng
+    });
     service = new google.maps.places.PlacesService(map);
+    console.log("places service initialized");
   });
-  $('#id_text').keyup(function(e){
-    if (e.keyCode == 32) {
-      // Grab last two words.
-      var text = $("#id_text").val();
-      var query_words = text.split(" ");
-      clearGoogleSearchResults();
-      for (var i = 0; i < query_words.length; i++) {
-        var query = query_words[i];
-        if (query === "" || query_to_results[query] !== undefined) {
-          console.log("skipping " + query);
-          continue;
-        }
-        issuePlacesSearchAndUpdateUI(query);
-      }
-    }
-  });
+}
+
+function find_last_word(text) {
+  var trimmed = text.trim();
+  var i = trimmed.lastIndexOf(" ");
+  return {'index':i, 'value':trimmed.substring(i)};
 }
 
 function find_last_two_words(text) {
@@ -105,30 +128,48 @@ function find_last_two_words(text) {
 }
 
 function clearGoogleSearchResults() {
-  var parent = document.getElementById("google-search-results");
-  while (parent.firstChild) {
-    parent.removeChild(parent.firstChild);
+  while (google_search_result_parent_element.firstChild) {
+    google_search_result_parent_element.removeChild(google_search_result_parent_element.firstChild);
   }
 }
 
 function addGoogleSearchResult(name, iconurl, address) {
-  var parent = document.getElementById("google-search-results");
+  var containerDiv = document.createElement("div");
   var icon = document.createElement("img");
   icon.src = iconurl;
   icon.width = 24;
   icon.height = 24;
   icon.className = "pull-left media-object";
-  var text = document.createElement("div");
-  text.className = "media-body";
+  var nameAndAddressDiv = document.createElement("div");
+  nameAndAddressDiv.className = "media-body";
 
   var header = document.createElement("h4");
   header.className = "media-heading";
   header.innerText = name;
 
-  parent.appendChild(icon);
-  text = parent.appendChild(text);
-  text.appendChild(header);
-  text.innerHTML += address;
+  containerDiv.appendChild(icon);
+  nameAndAddressDiv = containerDiv.appendChild(nameAndAddressDiv);
+  nameAndAddressDiv.appendChild(header);
+  nameAndAddressDiv.innerHTML += address;
+
+  containerDiv = google_search_result_parent_element.appendChild(containerDiv);
+
+  $(containerDiv).hover(function() {
+    $(this).css("background-color", "lightblue");
+  }, function() {
+    $(this).css("background-color", "white");
+  });
+
+  $(containerDiv).click(function() {
+    var old_status = $("#status #id_text").text();
+    old_status = old_status.substring(0, find_last_word(old_status)['index'] + 1);
+    var restaurantNode = document.createElement("restaurant");
+    restaurantNode.innerText = name;
+    old_status = old_status + "<restaurant>" + name + "</restaurant>";
+    console.log("setting to: " + old_status);
+    editor.set("content", old_status);
+    $("restaurant").hover
+  });
 }
 
 function getStatusUpdates() {
@@ -208,7 +249,6 @@ function issuePlacesSearchAndUpdateUI(query) {
       }
       for (var i = 0; i < results.length; i++) {
         addGoogleSearchResult(results[i].name, results[i].icon, results[i].vicinity);
-        console.log("adding result for " + query);
         query_to_results[query].push({'name':results[i].name, 'icon_url':results[i].icon, 'addr':results[i].vicinity});
       }
     }
@@ -300,7 +340,7 @@ function makeDivFileDropZone(element, instructions) {
     if (file.type.match(/image.*/)) {
       var reader = new FileReader();
       reader.onload = function(e2) { // finished reading file data.
-	startPictureCroppingUI(e2.target.result);
+        startPictureCroppingUI(e2.target.result);
       };
       reader.readAsDataURL(file); // start reading the file data.
       undoDropZoneDragUI(element);
@@ -323,6 +363,7 @@ function makeDivFileDropZone(element, instructions) {
 
   body.addEventListener("dragenter", function(evt) {
     if (!modifiedDiv) {
+      // TODO (nealsid): move this to CSS class that is added/removed.
       $(element).css("border", "lightblue");
       $(element).css("border-radius", "10px");
       $(element).css("border-style", "dotted");
@@ -356,4 +397,32 @@ function makeDivFileDropZone(element, instructions) {
       modifiedDiv = true;
     }
   });
+}
+
+
+/*
+ ** Returns the caret (cursor) position of the specified text field.
+ ** Return value range is 0-oField.value.length.
+ ** Copied from http://stackoverflow.com/questions/2897155/get-cursor-position-in-characters-within-a-text-input-field
+ */
+function caretPositionOfElement(elem) {
+  // Initialize
+  var iCaretPos = 0;
+  // IE Support
+  if (document.selection) {
+    // Set focus on the element
+    elem.focus();
+    // To get cursor position, get empty selection range
+    var oSel = document.selection.createRange ();
+    // Move selection start to 0 position
+    oSel.moveStart ('character', -elem.value.length);
+    // The caret position is selection length
+    iCaretPos = oSel.text.length;
+  } else if (elem.selectionStart || elem.selectionStart == '0') {
+    // Firefox/webkit support.
+    iCaretPos = elem.selectionStart;
+  }
+
+  // Return results
+  return (iCaretPos);
 }
