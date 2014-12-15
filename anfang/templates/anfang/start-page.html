@@ -8,6 +8,7 @@
 <script type="text/javascript" src={% static "js/croptastic.js" %}></script>
 <script type="text/javascript" src={% static "js/jquery.cookie.js" %}></script>
 <script type="text/javascript" src={% static "js/settings.js" %}></script>
+<script type="text/javascript" src={% static "js/richtext-entities.js" %}></script>
 <script type="text/javascript" src={% static "js/start-page.js" %}></script>
 <script type="text/javascript" src="http://yui.yahooapis.com/3.18.1/build/yui/yui-min.js"></script>
 <script>
@@ -43,33 +44,16 @@
   </div>
 
   <div id="status-column" class="col-md-3 col-sm-3" style="height: 800px;">
-    <form action="{% url 'anfang:new_status' %}" method="post" id="new-status">
+    <form name="status_form" action="{% url 'anfang:new_status' %}" method="post" id="new-status" onsubmit="submitStatusForm();">
       {% csrf_token %}
+      {{ status_form }}
       <div id="status">
-        <div id="id_text">
+        <div id="status_update_box">
         </div>
       </div>
     </form>
 
     <ul id="status_update_ul">
-      {% for s in status_updates %}
-      <li class="list-group-item" onmouseover="showDeleteLink(this);" onmouseout="hideDeleteLink(this);" id="{{ s.id }}">
-        <div class="status-update-box">
-          <img width="20px" height="20px" class="img-responsive" src={{ s.posting_user.userprofile.profile_picture.picture.url }}>
-          <p style="word-wrap:break-word;">
-            {{ s.text }}
-          </p>
-          <div id="status-timestamp">{{ s.time }}</div>
-          <div id="delete-link">
-            <h6>
-              <a href="#" onclick='issueDeleteStatusRequest("{% url 'anfang:delete_status' %}", {{ s.id }});'>
-                Delete
-              </a>
-            </h6>
-          </div>
-        </div>
-      </li>
-      {% endfor %}
     </ul>
     <div id="map" style="height: 500px; width=100%;-webkit-filter: blur(10px)">
     </div>

@@ -43,7 +43,7 @@ class StatusUpdate(models.Model):
     relationship = models.ForeignKey(UserRelationship)
     posting_user = models.ForeignKey(User)
     text = EncryptedCharField(block_type='MODE_CFB',
-                              max_length = 512,
+                              max_length = 8192,
                               verbose_name = "")
     picture = models.ImageField(null = True)
     time = EncryptedDateTimeField(block_type='MODE_CFB')

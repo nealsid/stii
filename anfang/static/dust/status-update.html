@@ -1,8 +1,8 @@
 <li class="list-group-item" onmouseover="showDeleteLink(this);" onmouseout="hideDeleteLink(this);" id="{id}">
   <div class="status-update-box">
-    <img width="20px" height="20px" class="img-responsive" src={url}>
+    <img width="20px" height="20px" class="poster-profile-pic img-responsive" src={url}>
     <p style="word-wrap:break-word;">
-      {text}
+      {text|s}
     </p>
     <div id="status-timestamp">{time}</div>
     <div id="delete-link">

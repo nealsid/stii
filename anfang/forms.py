@@ -1,4 +1,4 @@
-from django.forms import ModelForm, TextInput
+from django.forms import ModelForm, HiddenInput
 from models import UserProfile, UserPicture, StatusUpdate
 
 class ProfilePicForm(ModelForm):
@@ -11,5 +11,5 @@ class StatusUpdateForm(ModelForm):
         model = StatusUpdate
         fields = ['text']
         widgets = {
-            'text':TextInput(attrs={'placeholder':'Write something ridiculous...'})
+            'text':HiddenInput(attrs={'name':'status_update_hidden'})
         }

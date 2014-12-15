@@ -78,8 +78,13 @@ function postDocumentLoadSetup() {
     });
 
     //Rendering the Editor.
-    editor.render('#status #id_text');
-    $('#id_text').keyup(function(e) {
+    editor.render('#status #status_update_box');
+    $('#status_update_box').keyup(function(e) {
+      if (e.shiftKey && e.keyCode == 13) {
+        document.forms["status_form"].onsubmit();
+        document.forms["status_form"].submit();
+      }
+
       if (e.ctrlKey && e.keyCode == 82) {
         var last_word = find_last_word($(this).text())['value'];
         console.log("extracted " + last_word + " as search query");
@@ -88,6 +93,13 @@ function postDocumentLoadSetup() {
       }
     });
   });
+}
+
+function submitStatusForm() {
+  var status_form = document.forms['status_form'];
+  status_form.elements["text"].value = editor.getContent();
+  console.log("inside submit");
+  return false;
 }
 
 function initializeGoogleMaps() {
@@ -133,7 +145,7 @@ function clearGoogleSearchResults() {
   }
 }
 
-function addGoogleSearchResult(name, iconurl, address) {
+function addGoogleSearchResult(name, iconurl, address, photourl, lat, lng) {
   var containerDiv = document.createElement("div");
   var icon = document.createElement("img");
   icon.src = iconurl;
@@ -161,16 +173,31 @@ function addGoogleSearchResult(name, iconurl, address) {
   });
 
   $(containerDiv).click(function() {
-    var old_status = $("#status #id_text").text();
+    var old_status = $("#status #status_update_box").text();
     old_status = old_status.substring(0, find_last_word(old_status)['index'] + 1);
-    var restaurantNode = document.createElement("restaurant");
-    restaurantNode.innerText = name;
-    old_status = old_status + "<restaurant>" + name + "</restaurant>";
+    var restaurantNode = createRestaurant(name, photourl, lat, lng);
     console.log("setting to: " + old_status);
-    editor.set("content", old_status);
-    $("restaurant").hover
+    editor.set("content", old_status + $(restaurantNode).outerHTML());
   });
 }
+
+var getMap = function(opts) {
+  var src = "http://maps.googleapis.com/maps/api/staticmap?",
+      params = $.extend({
+        zoom: 16,
+        size: '176x176',
+        maptype: 'roadmap',
+        sensor: false
+      }, opts),
+      query = [];
+
+  $.each(params, function(k, v) {
+    query.push(k + '=' + encodeURIComponent(v));
+  });
+
+  src += query.join('&');
+  return '<img src="' + src + '" height=176 width=176 class=\"static-map\"/>';
+};
 
 function getStatusUpdates() {
   var status_updates = [];
@@ -187,6 +214,26 @@ function getStatusUpdates() {
       status_updates = $.parseJSON(data);
     })).then(function () {
       renderStatusUpdates(status_updates);
+      $('restaurant').each(function(index, value) {
+        var lat = $(this).attr("lat");
+        var lng = $(this).attr("lng");
+        var name = $(this).attr("name");
+        var markerString = "size:large|color:blue|" + lat + "," + lng;
+        var content = getMap(
+          {
+            center : new google.maps.LatLng(lat, lng),
+            markers : markerString
+          });
+        content = content + "<img src=\"" + $(this).attr("photourl") + "\" width=176 class=restaurant-image>";
+        $(this).popover(
+          {
+            content: content,
+            html:true,
+            title: name,
+            container: "body",
+            trigger:'hover',
+          });
+      });
     });
 }
 
@@ -232,23 +279,29 @@ function issuePlacesSearchAndUpdateUI(query) {
   var x = {};
   x.keyword = query;
   x.location = new google.maps.LatLng(lat, lng);
-  x.radius = 1000;
+  x.radius = 10000;
   x.rankby = google.maps.places.RankBy.DISTANCE;
-  x.types = ['restaurant'];
   query_to_results[query] = [];
   console.log("issuing query: " + query);
   console.log("rpc issue ts: " + Date.now());
   service.nearbySearch(
     x,
     function(results, status) {
-      console.log("rpc return ts: " + Date.now());
       clearGoogleSearchResults();
       if (status != google.maps.places.PlacesServiceStatus.OK) {
         console.log("Status from neabySearch call: " + status);
         return;
       }
       for (var i = 0; i < results.length; i++) {
-        addGoogleSearchResult(results[i].name, results[i].icon, results[i].vicinity);
+        var latlng = results[i].geometry.location;
+        var lat = latlng.lat();
+        var lng = latlng.lng();
+        var photourl = null;
+        if (results[i].photos !== undefined && results[i].photos.length > 0) {
+          var photo = results[i].photos[0];
+          photourl = photo.getUrl({"maxWidth":176});
+        }
+        addGoogleSearchResult(results[i].name, results[i].icon, results[i].vicinity, photourl, lat, lng);
         query_to_results[query].push({'name':results[i].name, 'icon_url':results[i].icon, 'addr':results[i].vicinity});
       }
     }

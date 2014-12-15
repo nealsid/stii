@@ -18,7 +18,7 @@ ul {
   opacity: 1.0;
 }
 
-.status-update-box img {
+.poster-profile-pic {
   width: 20px;
   float: left;
   margin-right:10px;
@@ -59,11 +59,6 @@ ul {
   height: 168;
 }
 
-#profile-picture {
-    border-width: 1px;
-    border: solid;
-}
-
 .status-update-box #status-timestamp {
   position: absolute;
   bottom: 2px;
@@ -78,7 +73,7 @@ ul {
   visibility: hidden;
 }
 
-#status #id_text, #status-render {
+#status #status_update_box, #status-render {
   margin-bottom: 14px;
   width: 100%;
   height: 55px;
@@ -112,6 +107,11 @@ restaurant {
   transition-delay: 0s;
 }
 
+.static-map {
+    border-radius: 10px;
+    padding: 5px;
+}
+
 #google-search-results img {
     margin-top: 5px;
     margin-right: 13px;
@@ -124,4 +124,8 @@ restaurant {
 #google-search-results .media-body {
     padding-bottom: 2.5px;
     padding-top: 2.5px;
+}
+
+.popover {
+    max-width: 512px;
 }
